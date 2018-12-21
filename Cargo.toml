@@ -5,3 +5,7 @@ authors = ["Matt Lawlor <matt.a.lawlor@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+bio = "0.25.0"
+rust-htslib = "0.22.0"
+itertools="*"
+quick-error="1.2.2"

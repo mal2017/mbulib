@@ -1,3 +1,11 @@
+extern crate rust_htslib;
+
+pub mod bam;
+
+
+
+
+
 #[cfg(test)]
 mod tests {
     #[test]
