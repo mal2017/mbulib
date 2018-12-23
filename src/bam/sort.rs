@@ -20,6 +20,7 @@ impl<'a, R: 'a + Read> BamSort for Records<'a, R> {
     fn name_sort(self) -> IntoIter<Record> {
         self.map(|a| a.unwrap())
             .sorted_by(|a, b| cmp_read_name(&a, &b))
+            .into_iter()
     }
 }
 
