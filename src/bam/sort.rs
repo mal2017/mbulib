@@ -5,15 +5,9 @@ use rust_htslib::bam::{Read, Records};
 use std::cmp::Ordering;
 use std::iter::Iterator;
 use std::vec::IntoIter;
+//use mbulib::RecordSort;
 
-/// Trait for sorting Records various ways.
-pub trait BamSort {
-    type Item;
-
-    fn name_sort(self) -> IntoIter<Self::Item>;
-}
-
-impl<'a, R: 'a + Read> BamSort for Records<'a, R> {
+impl<'a, R: 'a + Read> super::super::RecordSort for Records<'a, R> {
     type Item = Record;
 
     /// Sort a Records object by read name.
