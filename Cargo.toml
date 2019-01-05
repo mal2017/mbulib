@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 bio = "0.25.0"
+bio-types = "0.4.0"
 rust-htslib = "0.22.0"
 itertools="*"
 quick-error="1.2.2"
