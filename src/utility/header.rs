@@ -85,16 +85,16 @@ mod tests {
 
     #[test]
     fn grab_header_works() {
-        let bampath = Path::new("test/aln.mini.bam");
-        let mut bam = bam::Reader::from_path(bampath).unwrap();
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let bam = bam::Reader::from_path(bampath).unwrap();
         let so_tag = get_hdr_srt_tag(bam.header()).unwrap();
         assert_eq!(so_tag, "coordinate");
     }
 
     #[test]
     fn edit_header_works() {
-        let bampath = Path::new("test/aln.mini.bam");
-        let mut bam = bam::Reader::from_path(bampath).unwrap();
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let bam = bam::Reader::from_path(bampath).unwrap();
         let new_hdrv = HeaderView::from_header(&edit_hdr_srt_tag(bam.header(), "test"));
         let so_tag = get_hdr_srt_tag(&new_hdrv).unwrap();
         assert_eq!(so_tag, "test");
