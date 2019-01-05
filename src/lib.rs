@@ -3,18 +3,9 @@ extern crate linear_map;
 extern crate rust_htslib;
 //extern crate lazysort
 
+/// High-level utilities for common housekeeping tasks, such as
+/// file header reading/maniplation and record sorting.
+pub mod utility;
 
-use std::vec::IntoIter;
-
-/// Trait for sorting various Record Iterators various ways.
-pub trait RecordSort {
-    type Item;
-
-    /// Sort Records by name, ID, etc.
-    fn name_sort(self) -> IntoIter<Self::Item>;
-}
-
-
-
-
-pub mod bam;
+/// High-level utilities for importing/exporting genomic data types.
+pub mod io;

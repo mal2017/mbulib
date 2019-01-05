@@ -16,12 +16,12 @@ pub fn edit_hdr_srt_tag(hdrv: &bam::HeaderView, new_srt_tag: &str) -> bam::heade
     from_hashmap(&hm)
 }
 
-/// Get the value of the Header
+/// Get the value of the Header.
 pub fn get_hdr_srt_tag(hdrv: &bam::HeaderView) -> Option<String> {
     let hdr = bam::Header::from_template(hdrv);
-    let mut hm = hdr.to_hashmap().to_owned();
+    let hm = hdr.to_hashmap().to_owned();
     let hd = &hm.get("HD").unwrap().to_owned();
-    let mut record = hd[0].to_owned();
+    let record = hd[0].to_owned();
     match record.get(&"SO".to_string()) {
         Some(s) => Some(s.to_owned()),
         None => None,
@@ -37,7 +37,7 @@ fn from_hashmap(hm: &HashMap<String, Vec<LinearMap<String, String>>>) -> bam::he
     for x in bam_header_strings {
         match x {
             Some(x) => {
-                let mut y = x.join("\n");
+                let y = x.join("\n");
                 hdr_records_string.push(y);
             }
             None => (),
@@ -77,7 +77,7 @@ fn hdr_tag_to_string_vector(
 
 #[cfg(test)]
 mod tests {
-    use crate::bam::header::*;
+    use crate::utility::header::*;
     use rust_htslib::bam;
     use rust_htslib::bam::Read;
     use rust_htslib::bam::*;

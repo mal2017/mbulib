@@ -1,13 +1,22 @@
 use itertools::Itertools;
 use rust_htslib::bam::record::Record;
-use rust_htslib::bam::ReadError;
 use rust_htslib::bam::{Read, Records};
 use std::cmp::Ordering;
 use std::iter::Iterator;
 use std::vec::IntoIter;
 //use mbulib::RecordSort;
 
-impl<'a, R: 'a + Read> super::super::RecordSort for Records<'a, R> {
+/// Trait for sorting Record Iterators various ways.
+pub trait RecordSort {
+    type Item;
+
+    /// Sort Records by name, ID, etc. See implementations for
+    /// specific structs.
+    fn name_sort(self) -> IntoIter<Self::Item>;
+}
+
+/// Implementations for sort iterators over bam Records.
+impl<'a, R: 'a + Read> RecordSort for Records<'a, R> {
     type Item = Record;
 
     /// Sort a Records object by read name.
@@ -18,7 +27,7 @@ impl<'a, R: 'a + Read> super::super::RecordSort for Records<'a, R> {
     }
 }
 
-// Internal method for comparing Record vs Record lexicographically
+// Internal method for comparing Bam Record vs Bam Record lexicographically
 // by read name.
 fn cmp_read_name(rec1: &Record, rec2: &Record) -> Ordering {
     let read1name = String::from_utf8(rec1.qname().to_owned()).unwrap();
@@ -28,14 +37,14 @@ fn cmp_read_name(rec1: &Record, rec2: &Record) -> Ordering {
 
 #[cfg(test)]
 mod tests {
-    use crate::bam::sort::*;
+    use crate::utility::sort::*;
     use rust_htslib::bam;
     use rust_htslib::bam::Read;
     use std::path::Path;
 
     #[test]
     fn name_sort_bam_works() {
-        let bampath = Path::new("test/aln.mini.bam");
+        let bampath = Path::new("test/hs.pe.test.bam");
         let mut bam = bam::Reader::from_path(bampath).unwrap();
         let res = bam
             .records()
