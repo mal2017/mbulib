@@ -1,5 +1,4 @@
 use crate::utility::scaffold_dict::ScaffoldDict;
-use bio::data_structures::annot_map::AnnotMap;
 use bio_types::annot::contig::Contig;
 use bio_types::strand::Strand;
 use rust_htslib::bam;
@@ -13,7 +12,7 @@ pub trait LocusLike {
 
 /// Implementations for sort iterators over bam Records.
 impl LocusLike for bam::Record {
-    /// Sort a Records object by read name.
+    /// Create a contig from a bam record.
     fn as_contig(&self, sd: &ScaffoldDict, use_strand: bool) -> Contig<String, Strand> {
         let start = self.pos();
         let end = self
