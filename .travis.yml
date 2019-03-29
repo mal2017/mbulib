@@ -39,8 +39,8 @@ before_script:
   - rustup target add x86_64-unknown-linux-musl
 
 script:
-  - cargo fmt --version
-  - cargo fmt -- --check
+  #- cargo fmt --version
+  #- cargo fmt -- --check
   - cargo build --all-features
   - cargo test --all-features
   - cargo build --no-default-features
