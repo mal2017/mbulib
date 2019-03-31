@@ -13,42 +13,44 @@ pub struct Locus<T> {
     r: T
 }
 
-/// Construct
-impl<T: LocusLike> Locus<T> {
-    fn new(r: T) -> Self {
+/// Default constructor for Locus.
+/// T implements LocusLike
+impl<T> Locus<T> {
+    pub fn new(r: T) -> Self {
         Self {
             r: r,
         }
     }
 }
+//
+// impl Locus<bam::Record> {
+//
+// }
+//
+// impl Locus<bed::Record> {
+//
+// }
 
-impl Locus<bam::Record> {
-
+// Trait for coercing various record types into locus/range-like
+// data structures.
+pub trait AsContig {
+    fn as_contig(&self, use_strand: bool, sd: Option<&ScaffoldDict>) -> Contig<String, Strand>;
 }
 
-impl Locus<bed::Record> {
 
-}
-
-/// Trait for coercing various record types into locus/range-like
-/// data structures.
-pub trait LocusLike {
-    fn as_contig(&self, sd: &ScaffoldDict, use_strand: bool) -> Contig<String, Strand>;
-}
-
-
-impl LocusLike for bam::Record {
+impl AsContig for Locus<bam::Record> {
     /// Create a contig from a bam record.
-    fn as_contig(&self, sd: &ScaffoldDict, use_strand: bool) -> Contig<String, Strand> {
-        let start = self.pos();
+    fn as_contig(&self, use_strand: bool, sd: Option<&ScaffoldDict>) -> Contig<String, Strand> {
+        let start = self.r.pos();
         let end = self
+            .r
             .cigar()
             .end_pos()
-            .unwrap_or(self.seq().len() as i32 + start);
+            .unwrap_or(self.r.seq().len() as i32 + start);
         let w = end - start;
 
         let strand = match use_strand {
-            true => match self.is_reverse() {
+            true => match self.r.is_reverse() {
                 true => Strand::Reverse,
                 false => Strand::Forward,
             },
@@ -56,7 +58,7 @@ impl LocusLike for bam::Record {
         };
 
         Contig::new(
-            sd.id_to_str(self.tid()).unwrap().to_owned(),
+            sd.unwrap().id_to_str(self.r.tid()).unwrap().to_owned(),
             start as isize,
             w as usize,
             strand,
@@ -67,7 +69,7 @@ impl LocusLike for bam::Record {
 
 #[cfg(test)]
 mod tests {
-    use crate::loci::genomic_loci::*;
+    use crate::loci::locus::*;
     use crate::utility::scaffold_dict::ScaffoldDict;
     use bio::data_structures::annot_map::AnnotMap;
     use bio_types::annot::contig::Contig;
@@ -86,8 +88,9 @@ mod tests {
         let res = bam
             .records()
             .map(|a| a.unwrap())
+            .map(|a| Locus::new(a))
             .take(1)
-            .map(|a| a.as_contig(&tidmap, true));
+            .map(|a| a.as_contig(true, Some(&tidmap)));
 
         for i in res.into_iter() {
             assert_eq!(i.to_string(), truth);

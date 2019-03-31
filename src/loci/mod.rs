@@ -2,4 +2,4 @@
 
 pub mod into_annotmap;
 
-pub mod genomic_loci;
+pub mod locus;

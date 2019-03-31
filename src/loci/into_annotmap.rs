@@ -2,7 +2,8 @@ use bio::data_structures::annot_map::AnnotMap;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rust_htslib::bam::HeaderView;
-use crate::loci::genomic_loci::LocusLike;
+use crate::loci::locus::Locus;
+use crate::loci::locus::AsContig;
 use crate::utility::scaffold_dict::ScaffoldDict;
 use bio_types::annot::contig::Contig;
 use bio_types::strand::Strand;
@@ -32,7 +33,8 @@ impl IntoAnnotMap for rust_htslib::bam::Reader {
 
         let z = self.records()
                     .map(|a| a.unwrap())
-                    .map(|a| a.as_contig(&sd, true));
+                    .map(|a| Locus::new(a))
+                    .map(|a| a.as_contig(true, Some(&sd)));
 
 
         map
@@ -46,7 +48,7 @@ use bio::io::bed;
 
 #[cfg(test)]
 mod tests {
-    use crate::loci::genomic_loci::*;
+    use crate::loci::locus::*;
     use crate::loci::into_annotmap::IntoAnnotMap;
     use crate::utility::scaffold_dict::ScaffoldDict;
     use bio::data_structures::annot_map::AnnotMap;
