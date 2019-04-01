@@ -5,42 +5,23 @@ use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use bio::io::bed;
 
-/// Locus wraps various record types that might be reasonably
+
+/// LocusLike wraps various record types that might be reasonably
 /// represented as a range. For example: rust_htslib::bam::Record.
 /// This allows us to generate generics for many different
 // TODO make this a reference??
-pub struct Locus<T> {
+pub struct LocusLike<T> {
     r: T
 }
 
-/// Default constructor for Locus.
-/// T implements LocusLike
-impl<T> Locus<T> {
-    pub fn new(r: T) -> Self {
+/// Construct a LocusLike struct from a bam record.
+impl LocusLike<bam::Record> {
+    pub fn from_bam_rec(r: bam::Record) -> Self {
         Self {
             r: r,
         }
     }
-}
-//
-// impl Locus<bam::Record> {
-//
-// }
-//
-// impl Locus<bed::Record> {
-//
-// }
-
-// Trait for coercing various record types into locus/range-like
-// data structures.
-pub trait AsContig {
-    fn as_contig(&self, use_strand: bool, sd: Option<&ScaffoldDict>) -> Contig<String, Strand>;
-}
-
-
-impl AsContig for Locus<bam::Record> {
-    /// Create a contig from a bam record.
-    fn as_contig(&self, use_strand: bool, sd: Option<&ScaffoldDict>) -> Contig<String, Strand> {
+    pub fn as_contig(&self, use_strand: bool, sd: &ScaffoldDict) -> Contig<String, Strand> {
         let start = self.r.pos();
         let end = self
             .r
@@ -58,12 +39,39 @@ impl AsContig for Locus<bam::Record> {
         };
 
         Contig::new(
-            sd.unwrap().id_to_str(self.r.tid()).unwrap().to_owned(),
+            sd.id_to_str(self.r.tid()).unwrap().to_owned(),
             start as isize,
             w as usize,
             strand,
         )
     }
+}
+
+/// Construct a LocusLike struct from a bed record.
+impl LocusLike<bed::Record> {
+    pub fn from_bed_rec(r: bed::Record) -> Self {
+        Self {
+            r: r,
+        }
+    }
+    pub fn as_contig(&self, use_strand: bool) -> Contig<String, Strand> {
+
+        let strand = match use_strand {
+            true => match self.r.strand() {
+                Some(s) => s,
+                None => Strand::Unknown,
+            },
+            false => Strand::Unknown,
+        };
+
+        Contig::new(
+            self.r.chrom().to_string(),
+            self.r.start() as isize,
+            (self.r.end() - self.r.start()) as usize,
+            strand
+        )
+    }
+
 }
 
 
@@ -88,9 +96,9 @@ mod tests {
         let res = bam
             .records()
             .map(|a| a.unwrap())
-            .map(|a| Locus::new(a))
+            .map(|a| LocusLike::from_bam_rec(a))
             .take(1)
-            .map(|a| a.as_contig(true, Some(&tidmap)));
+            .map(|a| a.as_contig(true, &tidmap));
 
         for i in res.into_iter() {
             assert_eq!(i.to_string(), truth);
@@ -103,10 +111,11 @@ mod tests {
         let mut bam = bam::Reader::from_path(bampath).unwrap();
         let hdrv = bam.header();
         let tidmap = ScaffoldDict::from_header_view(&hdrv);
-        let res = bam
+        let res: Vec<_> = bam
             .records()
             .map(|a| a.unwrap())
-            .take(1)
-            .map(|a| Locus::new(a));
+            .take(2)
+            .map(|a| LocusLike::from_bam_rec(a))
+            .map(|a| a.as_contig(false, &tidmap)).collect();
     }
 }

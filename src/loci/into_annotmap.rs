@@ -2,8 +2,7 @@ use bio::data_structures::annot_map::AnnotMap;
 use rust_htslib::bam;
 use rust_htslib::bam::Read;
 use rust_htslib::bam::HeaderView;
-use crate::loci::locus::Locus;
-use crate::loci::locus::AsContig;
+use crate::loci::locus::LocusLike;
 use crate::utility::scaffold_dict::ScaffoldDict;
 use bio_types::annot::contig::Contig;
 use bio_types::strand::Strand;
@@ -33,8 +32,8 @@ impl IntoAnnotMap for rust_htslib::bam::Reader {
 
         let z = self.records()
                     .map(|a| a.unwrap())
-                    .map(|a| Locus::new(a))
-                    .map(|a| a.as_contig(true, Some(&sd)));
+                    .map(|a| LocusLike::from_bam_rec(a))
+                    .map(|a| a.as_contig(true, &sd));
 
 
         map
