@@ -5,6 +5,7 @@ use rust_htslib::bam::HeaderView;
 use crate::loci::locus::LocusLike;
 use crate::utility::scaffold_dict::ScaffoldDict;
 use bio_types::annot::contig::Contig;
+use bio_types::annot::loc::Loc;
 use bio_types::strand::Strand;
 
 // for reference:
@@ -12,38 +13,40 @@ use bio_types::strand::Strand;
 // https://github.com/mal2017/mbulib/commit/690a67d4be92dc3fb3dff8588d955a0e3c7723bb
 
 pub trait IntoAnnotMap {
-    fn collect_annotmap(self) -> AnnotMap<String, String> ;
+    fn collect_annotmap(self) -> AnnotMap<String, Contig<String, Strand>> ;
+    fn add_to(self, am: &mut AnnotMap<String, Contig<String,Strand>>) -> Result<(), &'static str>;
 }
 
-// impl<T> IntoAnnotMap for T
-//     where T: Iterator<Item = bam::Record>
-//     {
-//     fn collect_annotmap(self) -> AnnotMap<String, String> {
-//         let mut map: AnnotMap<String,String> = AnnotMap::new();
-//         map
-//     }
-// }
-
-impl IntoAnnotMap for rust_htslib::bam::Reader {
-    fn collect_annotmap(mut self) -> AnnotMap<String, String> {
-        let mut map: AnnotMap<String,String> = AnnotMap::new();
+impl<T: Read> IntoAnnotMap for T {
+    fn collect_annotmap(mut self) -> AnnotMap<String, Contig<String,Strand>> {
+        let mut map: AnnotMap<String,Contig<String,Strand>> = AnnotMap::new();
         let hd: &HeaderView = self.header();
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(hd);
 
         let z = self.records()
                     .map(|a| a.unwrap())
-                    .map(|a| LocusLike::from_bam_rec(a))
                     .map(|a| a.as_contig(true, &sd));
 
+        for i in z.into_iter() {
+            map.insert_loc(i);
+        }
 
         map
     }
+    fn add_to(mut self, am: &mut AnnotMap<String, Contig<String,Strand>>) -> Result<(), &'static str> {
+        let hd: &HeaderView = self.header();
+        let sd: ScaffoldDict = ScaffoldDict::from_header_view(hd);
+        let z = self.records()
+                    .map(|a| a.unwrap())
+                    .map(|a| a.as_contig(true, &sd));
+
+        for i in z.into_iter() {
+            am.insert_loc(i);
+        }
+        Ok(())
+    }
 }
 
-
-
-
-use bio::io::bed;
 
 #[cfg(test)]
 mod tests {
@@ -59,7 +62,8 @@ mod tests {
 
     #[test]
     fn bam_reads_2_annotmap() {
-        let bampath = Path::new("test/hs.pe.test.bam");
+        //let bampath = Path::new("test/hs.pe.test.bam");
+        let bampath = Path::new("../test.bam");
         let mut bam = bam::Reader::from_path(bampath).unwrap();
 
         let res = bam
