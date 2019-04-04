@@ -1,4 +1,3 @@
-//use bio_types::annot::contig::Contig;
 use bio_types::annot::pos::Pos;
 use bio_types::annot::loc::*;
 use bio_types::strand::*;
