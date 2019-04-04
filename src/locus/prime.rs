@@ -4,10 +4,13 @@ use bio_types::strand::*;
 
 // define EitherEnd for all types implementing loc
 pub trait EitherEnd : Loc {
+    /// Find the 5` end of a region.
     fn fiveprime(&self) -> Pos<Self::RefID, Self::Strand>
     where
         Self::RefID: Copy,
         Self::Strand: Into<ReqStrand> + Copy;
+
+    /// Find the 3` end of a region.
     fn threeprime(&self) -> Pos<Self::RefID, Self::Strand>
     where
         Self::RefID: Copy,
