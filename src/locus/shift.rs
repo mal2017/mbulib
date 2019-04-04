@@ -32,3 +32,37 @@ impl Shift for Pos<String, Strand> {
         Pos::new(self.refid().to_string(), self.start() + d2, self.strand())
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use crate::reads::locuslike::*;
+    use crate::locus::shift::*;
+    use crate::utility::scaffold_dict::ScaffoldDict;
+    use bio::data_structures::annot_map::AnnotMap;
+    use bio_types::annot::contig::Contig;
+    use bio_types::strand::ReqStrand;
+    use rust_htslib::bam;
+    use rust_htslib::bam::Read;
+    use std::path::Path;
+
+    #[test]
+    fn nostrand_shift_contig() {
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let mut bam = bam::Reader::from_path(bampath).unwrap();
+        let hdrv = bam.header();
+        let tidmap = ScaffoldDict::from_header_view(&hdrv);
+        let truth = "chr1:564481-564516";
+        let res = bam
+            .records()
+            .map(|a| a.unwrap())
+            .take(1)
+            .map(|a| a.as_contig(false, false, &tidmap, LibraryType::RandOrUnk))
+            .map(|a| a.shift(5));
+
+        for i in res.into_iter() {
+            assert_eq!(i.to_string(), truth);
+        }
+
+    }
+}
