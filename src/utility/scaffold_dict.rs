@@ -16,9 +16,7 @@ use std::string::String;
 /// systems.
 pub struct ScaffoldDict {
     map: HashMap<i32, String>,
-    rev: HashMap<String, i32>,
-    alt: Option<HashMap<i32, String>>,
-    alt_rev: Option<HashMap<String, i32>>,
+    alt: Option<HashMap<i32, String>>
 }
 
 impl ScaffoldDict {
@@ -36,9 +34,7 @@ impl ScaffoldDict {
         }
         ScaffoldDict {
             map: dict,
-            rev: rev,
             alt: None,
-            alt_rev: None,
         }
     }
 

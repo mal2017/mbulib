@@ -11,6 +11,9 @@ pub mod utility;
 /// High-level utilities for importing/exporting genomic data types.
 pub mod io;
 
-/// Mid-level utilities for dealing with converting records Into
+/// Mid-level utilities for dealing with converting read records Into
 /// locus-like data structures
-pub mod loci;
+pub mod reads;
+
+/// Utilities for manipulating structs that implement 'loc'.
+pub mod locus;

@@ -1,23 +1,23 @@
 use bio::data_structures::annot_map::AnnotMap;
 use rust_htslib::bam;
-use rust_htslib::bam::Read;
+use rust_htslib::bam::Records;
 use rust_htslib::bam::HeaderView;
-use crate::loci::locus::LocusLike;
+use crate::reads::locuslike::*;
 use crate::utility::scaffold_dict::ScaffoldDict;
 use bio_types::annot::contig::Contig;
-use bio_types::annot::loc::Loc;
 use bio_types::strand::Strand;
+use rust_htslib::bam::Read;
 
 // for reference:
 // https://stackoverflow.com/questions/30630810/using-generic-iterators-instead-of-specific-list-types
-// https://github.com/mal2017/mbulib/commit/690a67d4be92dc3fb3dff8588d955a0e3c7723bb
 
-pub trait IntoAnnotMap {
+/// Trait for converting bam/sam Records into annotation maps.
+pub trait AsAnnotMap {
     fn collect_annotmap(self) -> AnnotMap<String, Contig<String, Strand>> ;
     fn add_to(self, am: &mut AnnotMap<String, Contig<String,Strand>>) -> Result<(), &'static str>;
 }
 
-impl<T: Read> IntoAnnotMap for T {
+impl<T: Read> AsAnnotMap for T {
     fn collect_annotmap(mut self) -> AnnotMap<String, Contig<String,Strand>> {
         let mut map: AnnotMap<String,Contig<String,Strand>> = AnnotMap::new();
         let hd: &HeaderView = self.header();
@@ -41,6 +41,8 @@ impl<T: Read> IntoAnnotMap for T {
                     .map(|a| a.as_contig(true, &sd));
 
         for i in z.into_iter() {
+            // for some reason this method doesn't return
+            // a result.
             am.insert_loc(i);
         }
         Ok(())
@@ -50,25 +52,19 @@ impl<T: Read> IntoAnnotMap for T {
 
 #[cfg(test)]
 mod tests {
-    use crate::loci::locus::*;
-    use crate::loci::into_annotmap::IntoAnnotMap;
-    use crate::utility::scaffold_dict::ScaffoldDict;
-    use bio::data_structures::annot_map::AnnotMap;
-    use bio_types::annot::contig::Contig;
-    use bio_types::strand::ReqStrand;
+    use crate::reads::as_annotmap::AsAnnotMap;
     use rust_htslib::bam;
-    use rust_htslib::bam::Read;
     use std::path::Path;
+    use rust_htslib::bam::Read;
+    use rust_htslib::bam::Records;
 
     #[test]
     fn bam_reads_2_annotmap() {
-        //let bampath = Path::new("test/hs.pe.test.bam");
-        let bampath = Path::new("../test.bam");
-        let mut bam = bam::Reader::from_path(bampath).unwrap();
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let bam = bam::Reader::from_path(bampath).unwrap();
 
-        let res = bam
+        let _res = bam
             .collect_annotmap();
-
 
     }
 }

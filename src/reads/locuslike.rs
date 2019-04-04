@@ -38,7 +38,7 @@ impl LocusLike for bam::Record {
 
 #[cfg(test)]
 mod tests {
-    use crate::loci::locus::*;
+    use crate::reads::locuslike::*;
     use crate::utility::scaffold_dict::ScaffoldDict;
     use bio::data_structures::annot_map::AnnotMap;
     use bio_types::annot::contig::Contig;
