@@ -9,6 +9,7 @@ pub trait EitherEnd : Loc {
     //fn threeprime(self) -> Self;
 }
 
+/*
 impl<T: Loc> EitherEnd for T {
     fn fiveprime(&self) -> Pos<Self::RefID, Self::Strand>
     //where
@@ -22,3 +23,4 @@ impl<T: Loc> EitherEnd for T {
 
     }
 }
+*/

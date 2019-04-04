@@ -57,6 +57,8 @@ mod tests {
     use std::path::Path;
     use rust_htslib::bam::Read;
     use rust_htslib::bam::Records;
+    use bio_types::annot::contig::Contig;
+    use bio_types::strand::Strand;
 
     #[test]
     fn bam_reads_2_annotmap() {
@@ -66,5 +68,25 @@ mod tests {
         let _res = bam
             .collect_annotmap();
 
+    }
+
+    #[test]
+    fn annotmap_functioning() {
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let bam = bam::Reader::from_path(bampath).unwrap();
+
+        let am = bam
+            .collect_annotmap();
+
+
+        let query = Contig::new("chr1".to_owned(),
+                                564477,
+                                (565723 - 564477),
+                                Strand::Unknown);
+        let ov = am.find(&query);
+
+        let n = ov.into_iter().count();
+
+        assert_eq!(n, 9);
     }
 }
