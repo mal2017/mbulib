@@ -25,7 +25,7 @@ impl<T: Read> AsAnnotMap for T {
 
         let z = self.records()
                     .map(|a| a.unwrap())
-                    .map(|a| a.as_contig(true, &sd));
+                    .map(|a| a.as_contig(true, false, &sd, LibraryType::RandOrUnk));
 
         for i in z.into_iter() {
             map.insert_loc(i);
@@ -38,7 +38,7 @@ impl<T: Read> AsAnnotMap for T {
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(hd);
         let z = self.records()
                     .map(|a| a.unwrap())
-                    .map(|a| a.as_contig(true, &sd));
+                    .map(|a| a.as_contig(true, false, &sd, LibraryType::RandOrUnk));
 
         for i in z.into_iter() {
             // for some reason this method doesn't return
