@@ -1,6 +1,5 @@
 use linear_map::LinearMap;
 use rust_htslib::bam;
-use rust_htslib::bam::HeaderView;
 use std::collections::HashMap;
 use std::str;
 use std::string::String;

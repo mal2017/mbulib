@@ -2,10 +2,10 @@ use bio::data_structures::annot_map::AnnotMap;
 use rust_htslib::bam;
 use rust_htslib::bam::Records;
 use rust_htslib::bam::HeaderView;
-use crate::reads::locuslike::*;
+use crate::locus::from_read::*;
 use crate::utility::scaffold_dict::ScaffoldDict;
 use bio_types::annot::contig::Contig;
-use bio_types::strand::Strand;
+use bio_types::strand::ReqStrand;
 use rust_htslib::bam::Read;
 
 // for reference:
@@ -13,19 +13,19 @@ use rust_htslib::bam::Read;
 
 /// Trait for converting bam/sam Records into annotation maps.
 pub trait AsAnnotMap {
-    fn collect_annotmap(self) -> AnnotMap<String, Contig<String, Strand>> ;
-    fn add_to(self, am: &mut AnnotMap<String, Contig<String,Strand>>) -> Result<(), &'static str>;
+    fn collect_annotmap(self) -> AnnotMap<String, Contig<String, ReqStrand>> ;
+    fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>) -> Result<(), &'static str>;
 }
 
 impl<T: Read> AsAnnotMap for T {
-    fn collect_annotmap(mut self) -> AnnotMap<String, Contig<String,Strand>> {
-        let mut map: AnnotMap<String,Contig<String,Strand>> = AnnotMap::new();
+    fn collect_annotmap(mut self) -> AnnotMap<String, Contig<String,ReqStrand>> {
+        let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: &HeaderView = self.header();
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(hd);
 
         let z = self.records()
                     .map(|a| a.unwrap())
-                    .map(|a| a.as_contig(true, false, &sd, LibraryType::RandOrUnk));
+                    .map(|a| Contig::from_read(&a, false, &sd));
 
         for i in z.into_iter() {
             map.insert_loc(i);
@@ -33,12 +33,12 @@ impl<T: Read> AsAnnotMap for T {
 
         map
     }
-    fn add_to(mut self, am: &mut AnnotMap<String, Contig<String,Strand>>) -> Result<(), &'static str> {
+    fn add_to(mut self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>) -> Result<(), &'static str> {
         let hd: &HeaderView = self.header();
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(hd);
         let z = self.records()
                     .map(|a| a.unwrap())
-                    .map(|a| a.as_contig(true, false, &sd, LibraryType::RandOrUnk));
+                    .map(|a| Contig::from_read(&a, false, &sd));
 
         for i in z.into_iter() {
             // for some reason this method doesn't return

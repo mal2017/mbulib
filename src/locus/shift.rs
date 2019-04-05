@@ -11,11 +11,10 @@ pub trait Shift : Loc {
 }
 
 
-
-impl Shift for Contig<String, Strand> {
+impl Shift for Contig<String, ReqStrand> {
     fn shift(self, d: isize) -> Self {
         let d2 = match self.strand() {
-            Strand::Reverse => -1 * d,
+            ReqStrand::Reverse => -1 * d,
             _ => d,
         };
         Contig::new(self.refid().to_string(), self.start() + d2, self.length(), self.strand())
@@ -23,10 +22,10 @@ impl Shift for Contig<String, Strand> {
 }
 
 
-impl Shift for Pos<String, Strand> {
+impl Shift for Pos<String, ReqStrand> {
     fn shift(self, d: isize) -> Self {
         let d2 = match self.strand() {
-            Strand::Reverse => -1 * d,
+            ReqStrand::Reverse => -1 * d,
             _ => d,
         };
         Pos::new(self.refid().to_string(), self.start() + d2, self.strand())
@@ -36,12 +35,11 @@ impl Shift for Pos<String, Strand> {
 
 #[cfg(test)]
 mod tests {
-    use crate::reads::locuslike::*;
+    use crate::locus::from_read::*;
     use crate::locus::shift::*;
     use crate::utility::scaffold_dict::ScaffoldDict;
     use bio::data_structures::annot_map::AnnotMap;
     use bio_types::annot::contig::Contig;
-    use bio_types::strand::ReqStrand;
     use rust_htslib::bam;
     use rust_htslib::bam::Read;
     use std::path::Path;
@@ -52,12 +50,12 @@ mod tests {
         let mut bam = bam::Reader::from_path(bampath).unwrap();
         let hdrv = bam.header();
         let tidmap = ScaffoldDict::from_header_view(&hdrv);
-        let truth = "chr1:564481-564516";
+        let truth = "chr1:564481-564516(+)";
         let res = bam
             .records()
             .map(|a| a.unwrap())
             .take(1)
-            .map(|a| a.as_contig(false, false, &tidmap, LibraryType::RandOrUnk))
+            .map(|a| Contig::from_read(&a, false, &tidmap))
             .map(|a| a.shift(5));
 
         for i in res.into_iter() {
