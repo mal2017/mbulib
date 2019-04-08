@@ -12,17 +12,18 @@ use rust_htslib::bam::Read;
 use std::cmp::{min, max};
 
 pub trait IntoAnnotMap{
-    fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, hd: &HeaderView) -> Result<(), &'static str>;
+    fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, hd: &HeaderView, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str>;
 }
 
 impl<T: Iterator<Item=bam::Record>> IntoAnnotMap for T {
-    fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, hd: &HeaderView) -> Result<(), &'static str> {
+    fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, hd: &HeaderView, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(hd);
-        let z = self.map(|a| Contig::from_read(&a, false, &sd));
 
-        for i in z.into_iter() {
-            am.insert_loc(i);
+        match pf {
+            None => {self.map(|a| Contig::from_read(&a, false, &sd)).map(|a| am.insert_loc(a));},
+            Some(f) => {self.map(|a| Contig::from_read(&a, false, &sd)).map(|a| am.insert_loc(a));},
         }
+
         Ok(())
     }
 }
@@ -41,12 +42,12 @@ pub struct NGSLibrary<T>
 }
 
 impl NGSLibrary<bam::Reader> {
-    fn from_reader(mut b: bam::Reader, lt: LibraryType) -> Self {
+    fn from_reader(mut b: bam::Reader, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
         let _r = b.records()
                     .map(|a| a.unwrap())
-                    .add_to(&mut map, &hd);
+                    .add_to(&mut map, &hd, pf);
         NGSLibrary {
             reader: b,
             construction: lt,
@@ -56,7 +57,7 @@ impl NGSLibrary<bam::Reader> {
 }
 
 impl NGSLibrary<bam::IndexedReader> {
-    fn from_indexed(mut b: bam::IndexedReader, c: Vec<Contig<String,ReqStrand>>, lt: LibraryType) -> Self {
+    fn from_indexed(mut b: bam::IndexedReader, c: Vec<Contig<String,ReqStrand>>, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
@@ -68,12 +69,8 @@ impl NGSLibrary<bam::IndexedReader> {
             b.fetch(chr, min(c1,c2), max(c1,c2));
             b.records()
              .map(|a| a.unwrap())
-             .add_to(&mut map, &hd);
+             .add_to(&mut map, &hd, pf);
         }
-
-        b.records()
-         .map(|a| a.unwrap())
-         .add_to(&mut map, &hd);
 
         NGSLibrary {
             reader: b,
@@ -92,8 +89,10 @@ mod tests {
     use std::path::Path;
     use rust_htslib::bam::Read;
     use bio_types::annot::contig::Contig;
+    use bio_types::annot::loc::Loc;
     use bio_types::annot::contig::*;
     use crate::ngslibrary::*;
+    use crate::locus::shift::*;
     use rust_htslib::bam::HeaderView;
     use bio_types::strand::ReqStrand;
 
@@ -107,7 +106,7 @@ mod tests {
             .records()
             .take(5)
             .map(|a| a.unwrap())
-            .add_to(&mut map, &hd);
+            .add_to(&mut map, &hd, None);
 
         assert_eq!(res, Ok(()))
     }
@@ -117,7 +116,24 @@ mod tests {
         let bampath = Path::new("test/hs.pe.test.bam");
         let mut bam = bam::Reader::from_path(bampath).unwrap();
 
-        let r = NGSLibrary::from_reader(bam, LibraryType::Unstranded);
+        let r = NGSLibrary::from_reader(bam, LibraryType::Unstranded, None);
+
+    }
+
+    #[test]
+    fn reads_into_ngslib_preproc() {
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let mut bam = bam::Reader::from_path(bampath).unwrap();
+
+        fn tn5shift(c: Contig<String,ReqStrand>) -> Contig<String,ReqStrand> {
+            match c.strand() {
+                ReqStrand::Forward => c.shift(4),
+                ReqStrand::Reverse => c.shift(-5),
+            }
+
+        }
+
+        let r = NGSLibrary::from_reader(bam, LibraryType::Unstranded, Some(tn5shift));
 
     }
 
@@ -137,7 +153,7 @@ mod tests {
 
         let r = NGSLibrary::from_indexed(bam,
                                          vec!(c0,c1),
-                                         LibraryType::Unstranded);
+                                         LibraryType::Unstranded, None);
 
     }
 
