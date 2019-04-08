@@ -15,8 +15,8 @@ use std::string::String;
 /// between records on the same scaffold but annotated using different
 /// systems.
 pub struct ScaffoldDict {
-    map: HashMap<i32, String>,
-    alt: Option<HashMap<i32, String>>
+    i2s: HashMap<i32, String>,
+    s2i: HashMap<String, i32>
 }
 
 impl ScaffoldDict {
@@ -33,23 +33,24 @@ impl ScaffoldDict {
             rev.insert(t.to_owned(), i as i32);
         }
         ScaffoldDict {
-            map: dict,
-            alt: None,
+            i2s: dict,
+            s2i: rev,
         }
     }
 
     /// Take a TID (from a bam record, for example) and return
     /// the human-readable representation of the host scaffold.
     pub fn id_to_str(&self, id: i32) -> Option<&str> {
-        match self.map.get(&id) {
+        match self.i2s.get(&id) {
             Some(c) => Some(c),
-            None => match &self.alt {
-                Some(a) => match a.get(&id) {
-                    Some(ac) => Some(ac),
-                    None => None,
-                },
-                None => None,
-            },
+            None => None,
+            }
         }
-    }
+    pub fn str_to_id(&self, s: &str) -> Option<i32> {
+        match self.s2i.get(s) {
+            Some(c) => Some(c.clone()),
+            None => None,
+            }
+        }
+
 }
