@@ -1,5 +1,5 @@
 [package]
-name = "mbulib"
+name = "ngslib"
 version = "0.1.0"
 authors = ["Matt Lawlor <matt.a.lawlor@gmail.com>"]
 edition = "2018"
