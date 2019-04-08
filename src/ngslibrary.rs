@@ -28,12 +28,14 @@ impl<T: Iterator<Item=bam::Record>> IntoAnnotMap for T {
     }
 }
 
+#[derive(Debug)]
 pub enum LibraryType {
     R1Sense,
     R2Sense,
     Unstranded,
 }
 
+#[derive(Debug)]
 pub struct NGSLibrary<T>
     where T: bam::Read {
     reader: T,
@@ -137,6 +139,7 @@ mod tests {
 
     }
 
+    #[test]
     fn indexed_reads_into_ngslib() {
         let bampath = Path::new("test/hs.pe.test.bam");
         let mut bam = bam::IndexedReader::from_path(bampath).unwrap();
@@ -154,7 +157,6 @@ mod tests {
         let r = NGSLibrary::from_indexed(bam,
                                          vec!(c0,c1),
                                          LibraryType::Unstranded, None);
-
-    }
+        }
 
 }
