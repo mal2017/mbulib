@@ -3,16 +3,16 @@ use bio_types::annot::loc::*;
 use bio_types::annot::contig::Contig;
 use bio_types::strand::*;
 
-// Shift a Loc implementing object. Always relative to strand, unless
-// Loc object is unstranded in which case it is treated as Forward
-// stranded by convention.
+/// Shift a Loc implementing object. Always relative to strand, unless
+/// Loc object is unstranded in which case it is treated as Forward
+/// stranded by convention.
 pub trait Shift : Loc {
-    fn shift(self, d: isize) -> Self;
+    fn shift(&self, d: isize) -> Self;
 }
 
 
 impl Shift for Contig<String, ReqStrand> {
-    fn shift(self, d: isize) -> Self {
+    fn shift(&self, d: isize) -> Self {
         let d2 = match self.strand() {
             ReqStrand::Reverse => -1 * d,
             _ => d,
@@ -23,7 +23,7 @@ impl Shift for Contig<String, ReqStrand> {
 
 
 impl Shift for Pos<String, ReqStrand> {
-    fn shift(self, d: isize) -> Self {
+    fn shift(&self, d: isize) -> Self {
         let d2 = match self.strand() {
             ReqStrand::Reverse => -1 * d,
             _ => d,
@@ -31,6 +31,7 @@ impl Shift for Pos<String, ReqStrand> {
         Pos::new(self.refid().to_string(), self.start() + d2, self.strand())
     }
 }
+
 
 
 #[cfg(test)]
