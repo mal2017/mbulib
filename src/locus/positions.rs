@@ -29,12 +29,13 @@ impl<'a> Iterator for Positions<'a> {
             let w = self.region.length();
         match (self.idx as usize) < w {
             true => {
-                let sp = self.region.start();
+                //let sp = self.region.start();
                 let strand: strand::Strand = self.region.strand().into();
                 let refid: String = self.region.refid().to_string();
-                let pos = Pos::new(refid, sp + self.idx, strand);
+                let pos_in = Pos::new(refid, self.idx, strand);
+                let pos = self.region.pos_outof(&pos_in);
                 self.idx += 1;
-                Some(Ok(pos))
+                Some(Ok(pos.unwrap())) // TODO unscrew up this please, make it match and return error/option intelligently
             },
             false => {
                 None
