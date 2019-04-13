@@ -16,13 +16,42 @@ use std::cmp::{min, max};
 use crate::locus::shift::Shift;
 
 #[derive(Debug)]
-pub struct Positions<'a> {
-    region: &'a Contig<String,strand::ReqStrand>,
+pub struct Positions<'a, T>
+    where
+        T: Into<strand::Strand> + Copy {
+    region: &'a Contig<String, T>,
     idx: isize,
 }
 
-// This returns and Options<Result> for now, in case I want to implement more error checking later
-impl<'a> Iterator for Positions<'a> {
+// // This returns and Options<Result> for now, in case I want to implement more error checking later
+// impl<'a> Iterator for Positions<'a, T>
+//     where
+//         T: Loc,
+//         T::Strand: Into<strand::Strand> + Copy {
+//     type Item = Result<Pos<String, strand::Strand>, &'static str>;
+//     fn next(&mut self) -> Option<Result<Pos<String, strand::Strand>, &'static str>>
+//         {
+//             let w = self.region.length();
+//         match (self.idx as usize) < w {
+//             true => {
+//                 //let sp = self.region.start();
+//                 let strand: strand::Strand = self.region.strand().into();
+//                 let refid: String = self.region.refid().to_string();
+//                 let pos_in = Pos::new(refid, self.idx, strand);
+//                 let pos = self.region.pos_outof(&pos_in);
+//                 self.idx += 1;
+//                 Some(Ok(pos.unwrap())) // TODO unscrew up this please, make it match and return error/option intelligently
+//             },
+//             false => {
+//                 None
+//             }
+//         }
+//     }
+// }
+
+impl<'a> Iterator for Positions<'a, T>
+    where
+        T: Into<strand::Strand> + Copy {
     type Item = Result<Pos<String, strand::Strand>, &'static str>;
     fn next(&mut self) -> Option<Result<Pos<String, strand::Strand>, &'static str>>
         {
@@ -44,18 +73,24 @@ impl<'a> Iterator for Positions<'a> {
     }
 }
 
-pub trait PositionScan {
-    fn positions(&self) -> Positions;
-}
 
-impl PositionScan for Contig<String, strand::ReqStrand> {
-    fn positions(&self) -> Positions {
-        Positions {
-            region: self,
-            idx: 0
-        }
-    }
-}
+
+//
+// pub trait PositionScan {
+//     fn positions(&self) -> Positions<Self>
+//     where
+//         Self: Loc,
+//         Self::Strand: Into<strand::Strand> + Copy;
+// }
+//
+// impl PositionScan for Contig<String, strand::ReqStrand> {
+//     fn positions(&self) -> Positions<Self> {
+//         Positions {
+//             region: self,
+//             idx: 0
+//         }
+//     }
+//}
 
 #[cfg(test)]
 mod tests {
