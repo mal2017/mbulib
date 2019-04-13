@@ -47,24 +47,68 @@ use crate::locus::shift::Shift;
 // }
 
 #[derive(Debug)]
-pub struct Positions {
-    region: Contig<String,strand::Strand>,
+pub struct Positions<'a> {
+    region: &'a Contig<String,strand::ReqStrand>,
     idx: isize,
 }
 
-impl Iterator for Positions {
+impl<'a> Iterator for Positions<'a> {
     type Item = Result<Pos<String, strand::Strand>, &'static str>;
     fn next(&mut self) -> Option<Result<Pos<String, strand::Strand>, &'static str>>
         {
         let sp = self.region.start();
+        let w = self.region.length();
 
         let strand: strand::Strand = self.region.strand().into();
 
-        
+        let refid: String = self.region.refid().to_string();
 
-        let pos = Pos::new("chr1".to_string(), 100, strand::Strand::Unknown);
+        let pos = Pos::new(refid, self.idx, strand);
         self.idx += 1;
         Some(Ok(pos))
 
+    }
+}
+
+pub trait PositionScan {
+    fn positions(&self) -> Positions;
+}
+
+impl PositionScan for Contig<String, strand::ReqStrand> {
+    fn positions(&self) -> Positions {
+        Positions {
+            region: self,
+            idx: 0
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::locus::from_read::*;
+    use crate::utility::scaffold_dict::ScaffoldDict;
+    use bio_types::annot::contig::Contig;
+    use rust_htslib::bam;
+    use rust_htslib::bam::Read;
+    use std::path::Path;
+    use crate::locus::positions::*;
+
+
+    #[test]
+    fn positions_from_contig() {
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let mut bam = bam::Reader::from_path(bampath).unwrap();
+        let hdrv = bam.header();
+        let tidmap = ScaffoldDict::from_header_view(&hdrv);
+        let truth = "chr1:564476-564511(+)";
+        let res = bam
+            .records()
+            .map(|a| a.unwrap())
+            .take(1)
+            .map(|a| Contig::from_read(&a, false, &tidmap));
+
+        for i in res.into_iter() {
+            i.positions().for_each(|a| println!("{:?}",a));
+        }
     }
 }
