@@ -123,6 +123,15 @@ mod tests {
     use rust_htslib::bam::HeaderView;
     use bio_types::strand::ReqStrand;
 
+    fn tn5shift(c: Contig<String,ReqStrand>) -> Contig<String,ReqStrand> {
+        let new = Contig::new(c.refid().to_string(), c.start(), 1, c.strand());
+        match new.strand() {
+            ReqStrand::Forward => new.shift(4),
+            ReqStrand::Reverse => new.shift(-5),
+        }
+
+    }
+
     #[test]
     fn reads_into_annotmap() {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
@@ -135,14 +144,17 @@ mod tests {
             .map(|a| a.unwrap())
             .add_to(&mut map, &hd, None);
 
+        // TODO work on this test
         assert_eq!(res, Ok(()))
     }
 
     #[test]
     fn reads_into_ngslib() {
-        let bampath = Path::new("test/hs.pe.test.bam");
+        //let bampath = Path::new("test/hs.pe.test.bam");
+        let bampath = Path::new("/Users/mlawlor/Documents/proj/ID3g2_1.preproc.nooffset.bam");
         let mut bam = bam::Reader::from_path(bampath).unwrap();
 
+        // TODO Work on this test
         let r = NGSLibrary::from_reader(bam, LibraryType::Unstranded, None);
 
     }
@@ -152,14 +164,8 @@ mod tests {
         let bampath = Path::new("test/hs.pe.test.bam");
         let mut bam = bam::Reader::from_path(bampath).unwrap();
 
-        fn tn5shift(c: Contig<String,ReqStrand>) -> Contig<String,ReqStrand> {
-            match c.strand() {
-                ReqStrand::Forward => c.shift(4),
-                ReqStrand::Reverse => c.shift(-5),
-            }
 
-        }
-
+        // TODO work on this test
         let r = NGSLibrary::from_reader(bam, LibraryType::Unstranded, Some(tn5shift));
 
     }
@@ -169,10 +175,6 @@ mod tests {
         let bampath = Path::new("test/hs.pe.test.bam");
         let mut bam = bam::IndexedReader::from_path(bampath).unwrap();
 
-        let c0: Contig<String,ReqStrand> = Contig::new("chr10".to_string(),
-                                                     1000000,
-                                                     1000000,
-                                                     ReqStrand::Forward);
 
         let c1: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
                                                      1000000,
@@ -180,25 +182,26 @@ mod tests {
                                                      ReqStrand::Forward);
 
         let r = NGSLibrary::from_indexed(bam,
-                                         vec!(c0,c1),
+                                         vec!(c1),
                                          LibraryType::Unstranded,
                                          None);
         }
 
     #[test]
     fn coverage_across_region() {
-        let bampath = Path::new("test/hs.pe.test.bam");
+        //let bampath = Path::new("test/hs.pe.test.bam");
+        let bampath = Path::new("/Users/mlawlor/Documents/proj/ID3g2_1.preproc.nooffset.bam");
         let mut bam = bam::IndexedReader::from_path(bampath).unwrap();
 
         let c0: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
-                                                     564442,
-                                                     5000,
+                                                     564475,
+                                                     60,
                                                      ReqStrand::Forward);
 
         let r = NGSLibrary::from_indexed(bam,
                                         vec!(c0.clone()),
                                         LibraryType::Unstranded,
-                                        None);
+                                        Some(tn5shift));
         println!("COV ACROSS: {:?}", r);
 
         println!("COV ACROSS: {:?}", r.coverage_across(&c0));
