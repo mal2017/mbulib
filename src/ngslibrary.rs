@@ -25,7 +25,7 @@ impl<T: Iterator<Item=bam::Record>> IntoAnnotMap for T {
         // TODO make this return meaningful error
         match pf {
             None => {self.map(|a| Contig::from_read(&a, false, &sd)).for_each(|a| am.insert_loc(a));},
-            Some(f) => {self.map(|a| Contig::from_read(&a, false, &sd)).for_each(|a| am.insert_loc(a));},
+            Some(f) => {self.map(|a| Contig::from_read(&a, false, &sd)).map(|a| f(a)).for_each(|a| am.insert_loc(a));},
         }
 
         Ok(())
@@ -192,7 +192,7 @@ mod tests {
 
         let c0: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
                                                      564442,
-                                                     500,
+                                                     5000,
                                                      ReqStrand::Forward);
 
         let r = NGSLibrary::from_indexed(bam,
