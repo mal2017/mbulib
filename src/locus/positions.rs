@@ -3,7 +3,7 @@ use bio_types::annot::loc::Loc;
 use bio_types::annot::pos::Pos;
 use bio_types::strand;
 
-
+/// Struct for iterator of positions within a Contig.
 #[derive(Debug)]
 pub struct Positions<'a> {
     region: &'a Contig<String,strand::ReqStrand>,
@@ -11,6 +11,7 @@ pub struct Positions<'a> {
 }
 
 // This returns and Options<Result> for now, in case I want to implement more error checking later
+/// Iterator for Pos within a Contig.
 impl<'a> Iterator for Positions<'a> {
     type Item = Result<Pos<String, strand::ReqStrand>, &'static str>;
     fn next(&mut self) -> Option<Result<Pos<String, strand::ReqStrand>, &'static str>>
@@ -32,6 +33,7 @@ impl<'a> Iterator for Positions<'a> {
     }
 }
 
+/// Trait for generating an iterator of positions.
 pub trait PositionScan {
     fn positions(&self) -> Positions;
 }
@@ -47,7 +49,7 @@ impl PositionScan for Contig<String, strand::ReqStrand> {
 
 #[cfg(test)]
 mod tests {
-    use crate::locus::from_read::*;
+    use crate::locus::from_rec::*;
     use crate::utility::scaffold_dict::ScaffoldDict;
     use bio_types::annot::contig::Contig;
     use rust_htslib::bam;

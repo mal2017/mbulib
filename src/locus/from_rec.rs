@@ -6,14 +6,14 @@ use rust_htslib::bam;
 use std::cmp::min;
 
 
-pub trait LocFromRead {
+pub trait LocFromRec {
     /// From a bam record create a struct implementing @Loc.
     fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Self
     where
         Self: Loc;
 }
 
-impl LocFromRead for Contig<String, ReqStrand> {
+impl LocFromRec for Contig<String, ReqStrand> {
     fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Self {
         // TODO return error or None if not mapped?
         // only treat as frag is specified and possible
@@ -56,7 +56,7 @@ impl LocFromRead for Contig<String, ReqStrand> {
 
 #[cfg(test)]
 mod tests {
-    use crate::locus::from_read::*;
+    use crate::locus::from_rec::*;
     use crate::utility::scaffold_dict::ScaffoldDict;
     use bio_types::annot::contig::Contig;
     use rust_htslib::bam;

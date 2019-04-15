@@ -36,7 +36,7 @@ impl Shift for Pos<String, ReqStrand> {
 
 #[cfg(test)]
 mod tests {
-    use crate::locus::from_read::*;
+    use crate::locus::from_rec::*;
     use crate::locus::shift::*;
     use crate::utility::scaffold_dict::ScaffoldDict;
     use bio::data_structures::annot_map::AnnotMap;

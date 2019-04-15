@@ -1,8 +1,8 @@
-/// find the 5' and 3' ends of a contig.
-
-
+/// Shifting contigs.
 pub mod shift;
 
-pub mod from_read;
+/// Creating Congtigs from bam reads.
+pub mod from_rec;
 
+/// Creating iterators of Pos over Loc objects.
 pub mod positions;

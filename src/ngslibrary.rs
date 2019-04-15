@@ -1,13 +1,11 @@
-use bio::io::bed;
 use rust_htslib::bam;
 use bio::data_structures::annot_map::*;
 use bio_types::annot::contig::Contig;
 use bio_types::annot::pos::Pos;
 use bio_types::annot::loc::Loc;
-use bio_types::strand::{ReqStrand, Strand};
-use rust_htslib::bam::Records;
+use bio_types::strand::ReqStrand;
 use rust_htslib::bam::HeaderView;
-use crate::locus::from_read::*;
+use crate::locus::from_rec::*;
 use crate::utility::scaffold_dict::ScaffoldDict;
 use crate::locus::positions::PositionScan;
 use rust_htslib::bam::Read;
@@ -111,13 +109,11 @@ impl NGSLibrary<bam::IndexedReader> {
 #[cfg(test)]
 mod tests {
     use bio::data_structures::annot_map::AnnotMap;
-    use bio::io::bed;
     use rust_htslib::bam;
     use std::path::Path;
     use rust_htslib::bam::Read;
     use bio_types::annot::contig::Contig;
     use bio_types::annot::loc::Loc;
-    use bio_types::annot::contig::*;
     use crate::ngslibrary::*;
     use crate::locus::shift::*;
     use rust_htslib::bam::HeaderView;
@@ -150,30 +146,29 @@ mod tests {
 
     #[test]
     fn reads_into_ngslib() {
-        //let bampath = Path::new("test/hs.pe.test.bam");
-        let bampath = Path::new("/Users/mlawlor/Documents/proj/ID3g2_1.preproc.nooffset.bam");
-        let mut bam = bam::Reader::from_path(bampath).unwrap();
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let bam = bam::Reader::from_path(bampath).unwrap();
 
         // TODO Work on this test
-        let r = NGSLibrary::from_reader(bam, LibraryType::Unstranded, None);
+        let _r = NGSLibrary::from_reader(bam, LibraryType::Unstranded, None);
 
     }
 
     #[test]
     fn reads_into_ngslib_preproc() {
         let bampath = Path::new("test/hs.pe.test.bam");
-        let mut bam = bam::Reader::from_path(bampath).unwrap();
+        let bam = bam::Reader::from_path(bampath).unwrap();
 
 
         // TODO work on this test
-        let r = NGSLibrary::from_reader(bam, LibraryType::Unstranded, Some(tn5shift));
+        let _r = NGSLibrary::from_reader(bam, LibraryType::Unstranded, Some(tn5shift));
 
     }
 
     #[test]
     fn indexed_reads_into_ngslib() {
         let bampath = Path::new("test/hs.pe.test.bam");
-        let mut bam = bam::IndexedReader::from_path(bampath).unwrap();
+        let bam = bam::IndexedReader::from_path(bampath).unwrap();
 
 
         let c1: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
@@ -181,7 +176,7 @@ mod tests {
                                                      1000000,
                                                      ReqStrand::Forward);
 
-        let r = NGSLibrary::from_indexed(bam,
+        let _r = NGSLibrary::from_indexed(bam,
                                          vec!(c1),
                                          LibraryType::Unstranded,
                                          None);
@@ -189,9 +184,8 @@ mod tests {
 
     #[test]
     fn coverage_across_region() {
-        //let bampath = Path::new("test/hs.pe.test.bam");
-        let bampath = Path::new("/Users/mlawlor/Documents/proj/ID3g2_1.preproc.nooffset.bam");
-        let mut bam = bam::IndexedReader::from_path(bampath).unwrap();
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let bam = bam::IndexedReader::from_path(bampath).unwrap();
 
         let c0: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
                                                      564475,
