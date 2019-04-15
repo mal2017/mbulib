@@ -15,6 +15,7 @@ pub trait LocFromRead {
 
 impl LocFromRead for Contig<String, ReqStrand> {
     fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Self {
+        // TODO return error or None if not mapped?
         // only treat as frag is specified and possible
         let as_frag = match rec.is_proper_pair() {
             true => frag,
