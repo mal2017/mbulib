@@ -86,7 +86,10 @@ impl NGSLibrary<bam::IndexedReader> {
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
 
         for x in c.into_iter() {
-            let chr = sd.str_to_id(&x.refid()).unwrap() as u32;
+            let chr = match sd.str_to_id(&x.refid()) {
+                Some(i) => i as u32,
+                None => continue,
+            };
             let c1 = x.first_pos().start() as u32;
             let c2 = x.last_pos().start() as u32;
             b.fetch(chr, min(c1,c2), max(c1,c2));
