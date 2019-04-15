@@ -1,65 +1,24 @@
-use bio::io::bed;
-use rust_htslib::bam;
-use bio::data_structures::annot_map::AnnotMap;
 use bio_types::annot::contig::Contig;
 use bio_types::annot::loc::Loc;
-use bio_types::annot::loc::*;
 use bio_types::annot::pos::Pos;
 use bio_types::strand;
-use rust_htslib::bam::Records;
-use rust_htslib::bam::HeaderView;
-use crate::locus::from_read::*;
-use crate::locus::shift::*;
-use crate::utility::scaffold_dict::ScaffoldDict;
-use rust_htslib::bam::Read;
-use std::cmp::{min, max};
-use crate::locus::shift::Shift;
+
 
 #[derive(Debug)]
-pub struct Positions<'a, T>
-    where
-        T: Into<strand::Strand> + Copy {
-    region: &'a Contig<String, T>,
+pub struct Positions<'a> {
+    region: &'a Contig<String,strand::ReqStrand>,
     idx: isize,
 }
 
-// // This returns and Options<Result> for now, in case I want to implement more error checking later
-// impl<'a> Iterator for Positions<'a, T>
-//     where
-//         T: Loc,
-//         T::Strand: Into<strand::Strand> + Copy {
-//     type Item = Result<Pos<String, strand::Strand>, &'static str>;
-//     fn next(&mut self) -> Option<Result<Pos<String, strand::Strand>, &'static str>>
-//         {
-//             let w = self.region.length();
-//         match (self.idx as usize) < w {
-//             true => {
-//                 //let sp = self.region.start();
-//                 let strand: strand::Strand = self.region.strand().into();
-//                 let refid: String = self.region.refid().to_string();
-//                 let pos_in = Pos::new(refid, self.idx, strand);
-//                 let pos = self.region.pos_outof(&pos_in);
-//                 self.idx += 1;
-//                 Some(Ok(pos.unwrap())) // TODO unscrew up this please, make it match and return error/option intelligently
-//             },
-//             false => {
-//                 None
-//             }
-//         }
-//     }
-// }
-
-impl<'a> Iterator for Positions<'a, T>
-    where
-        T: Into<strand::Strand> + Copy {
-    type Item = Result<Pos<String, strand::Strand>, &'static str>;
-    fn next(&mut self) -> Option<Result<Pos<String, strand::Strand>, &'static str>>
+// This returns and Options<Result> for now, in case I want to implement more error checking later
+impl<'a> Iterator for Positions<'a> {
+    type Item = Result<Pos<String, strand::ReqStrand>, &'static str>;
+    fn next(&mut self) -> Option<Result<Pos<String, strand::ReqStrand>, &'static str>>
         {
             let w = self.region.length();
         match (self.idx as usize) < w {
             true => {
-                //let sp = self.region.start();
-                let strand: strand::Strand = self.region.strand().into();
+                let strand: strand::ReqStrand = self.region.strand().into();
                 let refid: String = self.region.refid().to_string();
                 let pos_in = Pos::new(refid, self.idx, strand);
                 let pos = self.region.pos_outof(&pos_in);
@@ -73,24 +32,18 @@ impl<'a> Iterator for Positions<'a, T>
     }
 }
 
+pub trait PositionScan {
+    fn positions(&self) -> Positions;
+}
 
-
-//
-// pub trait PositionScan {
-//     fn positions(&self) -> Positions<Self>
-//     where
-//         Self: Loc,
-//         Self::Strand: Into<strand::Strand> + Copy;
-// }
-//
-// impl PositionScan for Contig<String, strand::ReqStrand> {
-//     fn positions(&self) -> Positions<Self> {
-//         Positions {
-//             region: self,
-//             idx: 0
-//         }
-//     }
-//}
+impl PositionScan for Contig<String, strand::ReqStrand> {
+    fn positions(&self) -> Positions {
+        Positions {
+            region: self,
+            idx: 0
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
