@@ -123,12 +123,11 @@ mod tests {
     use bio_types::strand::ReqStrand;
 
     fn tn5shift(c: Contig<String,ReqStrand>) -> Contig<String,ReqStrand> {
-        let new = Contig::new(c.refid().to_string(), c.start(), 1, c.strand());
-        match new.strand() {
-            ReqStrand::Forward => new.shift(4),
-            ReqStrand::Reverse => new.shift(-5),
-        }
-
+    let new = match c.strand() {
+        ReqStrand::Forward => c.shift(4),
+        ReqStrand::Reverse => c.shift(-5),
+    };
+    new.first_pos().contig()
     }
 
     #[test]
