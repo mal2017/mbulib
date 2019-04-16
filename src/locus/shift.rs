@@ -11,7 +11,9 @@ pub trait Shift : Loc {
 }
 
 
+
 impl Shift for Contig<String, ReqStrand> {
+    /// Always relative to strand, not reference.
     fn shift(&self, d: isize) -> Self {
         let d2 = match self.strand() {
             ReqStrand::Reverse => -1 * d,
