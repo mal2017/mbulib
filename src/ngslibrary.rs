@@ -12,23 +12,40 @@ use rust_htslib::bam::Read;
 use std::cmp::{min, max};
 
 trait IntoAnnotMap{
-    fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, hd: &HeaderView, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str>;
+    fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, sd: &ScaffoldDict, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str>;
 }
 
 /// TODO: ADD OPTIONAL FILTERING/PREPROC STEP FOR RAW READS
+// impl<T: Iterator<Item=bam::Record>> IntoAnnotMap for T {
+//     fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, hd: &HeaderView, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
+//         let sd: ScaffoldDict = ScaffoldDict::from_header_view(hd);
+//
+//         // TODO make this return meaningful error
+//         match pf {
+//             None => {self.map(|a| Contig::from_read(&a, false, &sd)).for_each(|a| am.insert_loc(a));},
+//             Some(f) => {self.map(|a| Contig::from_read(&a, false, &sd)).map(|a| f(a)).for_each(|a| am.insert_loc(a));},
+//         }
+//
+//         Ok(())
+//     }
+// }
+
 impl<T: Iterator<Item=bam::Record>> IntoAnnotMap for T {
-    fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, hd: &HeaderView, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
-        let sd: ScaffoldDict = ScaffoldDict::from_header_view(hd);
+    fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, sd: &ScaffoldDict, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
+
+        //for r in self:
+
 
         // TODO make this return meaningful error
         match pf {
-            None => {self.map(|a| Contig::from_read(&a, false, &sd)).for_each(|a| am.insert_loc(a));},
-            Some(f) => {self.map(|a| Contig::from_read(&a, false, &sd)).map(|a| f(a)).for_each(|a| am.insert_loc(a));},
+            None => {self.map(|a| Contig::from_read(&a, false, sd)).for_each(|a| am.insert_loc(a));},
+            Some(f) => {self.map(|a| Contig::from_read(&a, false, sd)).map(|a| f(a)).for_each(|a| am.insert_loc(a));},
         }
 
         Ok(())
     }
 }
+
 
 #[derive(Debug)]
 pub enum LibraryType {
@@ -67,9 +84,10 @@ impl NGSLibrary<bam::Reader> {
     pub fn from_reader(mut b: bam::Reader, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
+        let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
         let _r = b.records()
                     .map(|a| a.unwrap())
-                    .add_to(&mut map, &hd, pf);
+                    .add_to(&mut map, &sd, pf);
         NGSLibrary {
             reader: b,
             construction: lt,
@@ -95,7 +113,7 @@ impl NGSLibrary<bam::IndexedReader> {
             b.fetch(chr, min(c1,c2), max(c1,c2));
             b.records()
              .map(|a| a.unwrap())
-             .add_to(&mut map, &hd, pf);
+             .add_to(&mut map, &sd, pf);
         }
 
         NGSLibrary {
@@ -125,7 +143,7 @@ mod tests {
     fn tn5shift(c: Contig<String,ReqStrand>) -> Contig<String,ReqStrand> {
     let new = match c.strand() {
         ReqStrand::Forward => c.shift(4),
-        ReqStrand::Reverse => c.shift(-5),
+        ReqStrand::Reverse => c.shift(5),
     };
     new.first_pos().contig()
     }
@@ -136,11 +154,12 @@ mod tests {
         let bampath = Path::new("test/hs.pe.test.bam");
         let mut bam = bam::Reader::from_path(bampath).unwrap();
         let hd: HeaderView = bam.header().clone();
+        let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
         let res = bam
             .records()
             .take(5)
             .map(|a| a.unwrap())
-            .add_to(&mut map, &hd, None);
+            .add_to(&mut map, &sd, None);
 
         // TODO work on this test
         assert_eq!(res, Ok(()))
@@ -203,4 +222,5 @@ mod tests {
         println!("COV ACROSS: {:?}", r.coverage_across(&c0));
 
         }
+
 }

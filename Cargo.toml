@@ -11,3 +11,11 @@ rust-htslib = "0.22.0"
 itertools="*"
 quick-error="1.2.2"
 linear-map="1.2.0"
+
+
+[dev-dependencies]
+criterion = "0.2.11"
+
+[[bench]]
+name = "ngslib_benches"
+harness = false
