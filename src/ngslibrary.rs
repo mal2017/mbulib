@@ -20,8 +20,12 @@ impl<T: Iterator<Item=bam::Record>> IntoAnnotMap for T {
     fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, sd: &ScaffoldDict, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
 
         match pf {
-            None => {self.filter_map(|a| Contig::from_read(&a, false, sd)).for_each(|a| am.insert_loc(a));},
-            Some(f) => {self.filter_map(|a| Contig::from_read(&a, false, sd)).map(|a| f(a)).for_each(|a| am.insert_loc(a));},
+            None => {self.map(|a| Contig::from_read(&a, false, sd))
+                         .map(|a| a.unwrap())
+                         .for_each(|a| am.insert_loc(a));},
+            Some(f) => {self.map(|a| Contig::from_read(&a, false, sd))
+                            .map(|a| a.unwrap())
+                            .map(|a| f(a)).for_each(|a| am.insert_loc(a));},
         }
 
         Ok(())

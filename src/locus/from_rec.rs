@@ -1,4 +1,5 @@
 use crate::utility::scaffold_dict::ScaffoldDict;
+use crate::errors::*;
 use bio_types::annot::contig::Contig;
 use bio_types::annot::loc::Loc;
 use bio_types::strand::ReqStrand;
@@ -8,16 +9,21 @@ use std::cmp::min;
 
 pub trait LocFromRec {
     /// From a bam record create a struct implementing @Loc.
-    fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Option<Self>
+    fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Result<Self, InvalidRecordError>
     where
         Self: Loc + Sized;
 }
 
 impl LocFromRec for Contig<String, ReqStrand> {
-    fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Option<Self>  {
+    fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Result<Self, InvalidRecordError>  {
         if rec.is_unmapped() {
-            return None;
+            return Err(InvalidRecordError::UnmappedRecord);
         }
+
+        let chr = match sd.id_to_str(rec.tid()) {
+            Some(r) => r.to_owned(),
+            None => return Err(InvalidRecordError::UnknownScaffold),
+        };
 
         // only treat as frag is specified and possible
         let as_frag = match rec.is_proper_pair() {
@@ -25,7 +31,7 @@ impl LocFromRec for Contig<String, ReqStrand> {
             false => false,
         };
 
-        // get the leftmost position of a template.
+        // get the leftmost position of a template. TODO: do i need to do this?
         let start = match as_frag {
             false => rec.pos(),
             true  => min(rec.pos(), rec.mpos())
@@ -46,25 +52,14 @@ impl LocFromRec for Contig<String, ReqStrand> {
                 false => ReqStrand::Forward,
         };
 
-        Some(Contig::new(
-            sd.id_to_str(rec.tid()).unwrap().to_owned(),
+        Ok(Contig::new(
+            chr,
             start as isize,
             (end - start) as usize,
             strand,
         ))
     }
 }
-
-quick_error! {
-    #[derive(Debug, Clone)]
-    pub enum InvalidRecordError {
-        UnmappedRecord {
-            description("Record is unmapped/unpaired")
-        }
-    }
-}
-
-
 
 #[cfg(test)]
 mod tests {

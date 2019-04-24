@@ -68,7 +68,8 @@ mod tests {
             .records()
             .map(|a| a.unwrap())
             .take(2)
-            .map(|a| Contig::from_read(&a, false, &tidmap));
+            .map(|a| Contig::from_read(&a, false, &tidmap))
+            .map(|a| a.unwrap());
 
         for i in res.into_iter() {
             println!("\nREAD: {:?}",i);

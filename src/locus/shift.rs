@@ -59,6 +59,7 @@ mod tests {
             .map(|a| a.unwrap())
             .take(1)
             .map(|a| Contig::from_read(&a, false, &tidmap))
+            .map(|a| a.unwrap())
             .map(|a| a.shift(5));
 
         for i in res.into_iter() {
