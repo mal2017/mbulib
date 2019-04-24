@@ -8,14 +8,17 @@ use std::cmp::min;
 
 pub trait LocFromRec {
     /// From a bam record create a struct implementing @Loc.
-    fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Self
+    fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Option<Self>
     where
-        Self: Loc;
+        Self: Loc + Sized;
 }
 
 impl LocFromRec for Contig<String, ReqStrand> {
-    fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Self {
-        // TODO return error or None if not mapped?
+    fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Option<Self>  {
+        if rec.is_unmapped() {
+            return None;
+        }
+
         // only treat as frag is specified and possible
         let as_frag = match rec.is_proper_pair() {
             true => frag,
@@ -43,12 +46,21 @@ impl LocFromRec for Contig<String, ReqStrand> {
                 false => ReqStrand::Forward,
         };
 
-        Contig::new(
+        Some(Contig::new(
             sd.id_to_str(rec.tid()).unwrap().to_owned(),
             start as isize,
             (end - start) as usize,
             strand,
-        )
+        ))
+    }
+}
+
+quick_error! {
+    #[derive(Debug, Clone)]
+    pub enum InvalidRecordError {
+        UnmappedRecord {
+            description("Record is unmapped/unpaired")
+        }
     }
 }
 
@@ -78,7 +90,7 @@ mod tests {
             .map(|a| Contig::from_read(&a, false, &tidmap));
 
         for i in res.into_iter() {
-            assert_eq!(i.to_string(), truth);
+            assert_eq!(i.unwrap().to_string(), truth);
         }
     }
 }

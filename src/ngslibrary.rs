@@ -15,31 +15,13 @@ trait IntoAnnotMap{
     fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, sd: &ScaffoldDict, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str>;
 }
 
-/// TODO: ADD OPTIONAL FILTERING/PREPROC STEP FOR RAW READS
-// impl<T: Iterator<Item=bam::Record>> IntoAnnotMap for T {
-//     fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, hd: &HeaderView, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
-//         let sd: ScaffoldDict = ScaffoldDict::from_header_view(hd);
-//
-//         // TODO make this return meaningful error
-//         match pf {
-//             None => {self.map(|a| Contig::from_read(&a, false, &sd)).for_each(|a| am.insert_loc(a));},
-//             Some(f) => {self.map(|a| Contig::from_read(&a, false, &sd)).map(|a| f(a)).for_each(|a| am.insert_loc(a));},
-//         }
-//
-//         Ok(())
-//     }
-// }
 
 impl<T: Iterator<Item=bam::Record>> IntoAnnotMap for T {
     fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, sd: &ScaffoldDict, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
 
-        //for r in self:
-
-
-        // TODO make this return meaningful error
         match pf {
-            None => {self.map(|a| Contig::from_read(&a, false, sd)).for_each(|a| am.insert_loc(a));},
-            Some(f) => {self.map(|a| Contig::from_read(&a, false, sd)).map(|a| f(a)).for_each(|a| am.insert_loc(a));},
+            None => {self.filter_map(|a| Contig::from_read(&a, false, sd)).for_each(|a| am.insert_loc(a));},
+            Some(f) => {self.filter_map(|a| Contig::from_read(&a, false, sd)).map(|a| f(a)).for_each(|a| am.insert_loc(a));},
         }
 
         Ok(())
