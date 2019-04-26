@@ -15,7 +15,7 @@ pub mod scaffold_dict;
 pub mod locus;
 
 /// Utilities for converting bams to usable data structures.
-pub mod ngslibrary;
+pub mod rqmap;
 
 /// Useful and descriptive errors
 pub mod errors;

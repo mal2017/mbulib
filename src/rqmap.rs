@@ -43,14 +43,14 @@ pub enum LibraryType {
 /// Struct holds a library of NGS reads as an AnnotMap, as well as the original reader struct
 /// and strandedness information.
 #[derive(Debug)]
-pub struct NGSLibrary<T>
+pub struct RQMap<T>
     where T: bam::Read {
     reader: T,
     construction: LibraryType,
     map: AnnotMap<String, Contig<String,ReqStrand>>,
 }
 
-impl<T: Read> NGSLibrary<T> {
+impl<T: Read> RQMap<T> {
     /// Retrieve the coverage at a pointlike locus.
     pub fn coverage_at<D: Into<ReqStrand>>(&self, p: &Pos<String, D>) -> usize {
         self.map.find(p).count()
@@ -65,8 +65,8 @@ impl<T: Read> NGSLibrary<T> {
 }
 
 
-impl NGSLibrary<bam::Reader> {
-    /// Create an NGSLibrary from an indexed bam reader.
+impl RQMap<bam::Reader> {
+    /// Create an RQMap from an indexed bam reader.
     pub fn from_reader(mut b: bam::Reader, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
@@ -74,7 +74,7 @@ impl NGSLibrary<bam::Reader> {
         let _r = b.records()
                     .map(|a| a.unwrap())
                     .add_to(&mut map, &sd, pf);
-        NGSLibrary {
+        RQMap {
             reader: b,
             construction: lt,
             map: map,
@@ -82,8 +82,8 @@ impl NGSLibrary<bam::Reader> {
     }
 }
 
-impl NGSLibrary<bam::IndexedReader> {
-    /// Create an NGSLibrary from an indexed bam reader.
+impl RQMap<bam::IndexedReader> {
+    /// Create an RQMap from an indexed bam reader.
     pub fn from_indexed(mut b: bam::IndexedReader, c: Vec<Contig<String,ReqStrand>>, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
@@ -102,7 +102,7 @@ impl NGSLibrary<bam::IndexedReader> {
              .add_to(&mut map, &sd, pf);
         }
 
-        NGSLibrary {
+        RQMap {
             reader: b,
             construction: lt,
             map: map,
@@ -121,7 +121,7 @@ mod tests {
     use rust_htslib::bam::Read;
     use bio_types::annot::contig::Contig;
     use bio_types::annot::loc::Loc;
-    use crate::ngslibrary::*;
+    use crate::rqmap::*;
     use crate::locus::shift::*;
     use rust_htslib::bam::HeaderView;
     use bio_types::strand::ReqStrand;
@@ -157,7 +157,7 @@ mod tests {
         let bam = bam::Reader::from_path(bampath).unwrap();
 
         // TODO Work on this test
-        let _r = NGSLibrary::from_reader(bam, LibraryType::Unstranded, None);
+        let _r = RQMap::from_reader(bam, LibraryType::Unstranded, None);
 
     }
 
@@ -168,7 +168,7 @@ mod tests {
 
 
         // TODO work on this test
-        let _r = NGSLibrary::from_reader(bam, LibraryType::Unstranded, Some(tn5shift));
+        let _r = RQMap::from_reader(bam, LibraryType::Unstranded, Some(tn5shift));
 
     }
 
@@ -183,7 +183,7 @@ mod tests {
                                                      1000000,
                                                      ReqStrand::Forward);
 
-        let _r = NGSLibrary::from_indexed(bam,
+        let _r = RQMap::from_indexed(bam,
                                          vec!(c1),
                                          LibraryType::Unstranded,
                                          None);
@@ -199,7 +199,7 @@ mod tests {
                                                      60,
                                                      ReqStrand::Forward);
 
-        let r = NGSLibrary::from_indexed(bam,
+        let r = RQMap::from_indexed(bam,
                                         vec!(c0.clone()),
                                         LibraryType::Unstranded,
                                         Some(tn5shift));
