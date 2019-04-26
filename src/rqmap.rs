@@ -66,6 +66,7 @@ impl<T: Read> RQMap<T> {
 
 
 impl RQMap<bam::Reader> {
+    /// TODO add filter for raw reads
     /// Create an RQMap from an indexed bam reader.
     pub fn from_reader(mut b: bam::Reader, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();

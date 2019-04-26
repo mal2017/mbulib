@@ -31,7 +31,7 @@ impl LocFromRec for Contig<String, ReqStrand> {
             false => false,
         };
 
-        // get the leftmost position of a template. TODO: do i need to do this?
+        // get the leftmost position of a template.
         let start = match as_frag {
             false => rec.pos(),
             true  => min(rec.pos(), rec.mpos())

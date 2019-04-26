@@ -8,17 +8,12 @@ use std::string::String;
 /// Other functions may take a reference to this map as an argument
 /// and us thus intended to be created once for every bam rather
 /// than reinitialized frequently.
-///
-/// Also holds one alternate set of annotations. Useful when translating
-/// between records on the same scaffold but annotated using different
-/// systems.
 pub struct ScaffoldDict {
     i2s: HashMap<i32, String>,
     s2i: HashMap<String, i32>
 }
 
 impl ScaffoldDict {
-    // TODO add str to id function
     // TODO handle panics
     /// Create a ScaffoldDict from a header view as returned
     /// by `bam.header()`.
@@ -44,6 +39,9 @@ impl ScaffoldDict {
             None => None,
             }
         }
+
+    /// Take the human-readable representation of the host scaffold
+    /// and return a TID (from a bam record, for example).
     pub fn str_to_id(&self, s: &str) -> Option<i32> {
         match self.s2i.get(s) {
             Some(c) => Some(c.clone()),
