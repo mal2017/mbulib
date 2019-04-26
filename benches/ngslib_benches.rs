@@ -5,7 +5,7 @@ extern crate criterion;
 use criterion::Criterion;
 use criterion::black_box;
 
-extern crate ngslib;
+extern crate rqmap;
 
 use bio::data_structures::annot_map::AnnotMap;
 use rust_htslib::bam;
@@ -13,9 +13,9 @@ use std::path::Path;
 use rust_htslib::bam::Read;
 use bio_types::annot::contig::Contig;
 use bio_types::annot::loc::Loc;
-use ngslib::ngslibrary::*;
-use ngslib::locus::shift::*;
-use ngslib::utility::scaffold_dict::*;
+use rqmap::ngslibrary::*;
+use rqmap::locus::shift::*;
+use rqmap::scaffold_dict::*;
 use rust_htslib::bam::HeaderView;
 use bio_types::strand::ReqStrand;
 

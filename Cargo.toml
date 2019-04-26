@@ -1,5 +1,5 @@
 [package]
-name = "ngslib"
+name = "rqmap"
 version = "0.1.0-alpha.1"
 authors = ["Matt Lawlor <matt.a.lawlor@gmail.com>"]
 edition = "2018"

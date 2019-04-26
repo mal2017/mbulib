@@ -6,7 +6,7 @@ use bio_types::annot::loc::Loc;
 use bio_types::strand::ReqStrand;
 use rust_htslib::bam::HeaderView;
 use crate::locus::from_rec::*;
-use crate::utility::scaffold_dict::ScaffoldDict;
+use crate::scaffold_dict::ScaffoldDict;
 use crate::locus::positions::PositionScan;
 use rust_htslib::bam::Read;
 use std::cmp::{min, max};

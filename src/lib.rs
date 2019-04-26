@@ -3,13 +3,13 @@ extern crate itertools;
 extern crate linear_map;
 extern crate rust_htslib;
 
-#[macro_use] 
+#[macro_use]
 extern crate quick_error;
 //extern crate lazysort
 
 /// Utilities for common housekeeping tasks, such as
 /// file header reading/maniplation.
-pub mod utility;
+pub mod scaffold_dict;
 
 /// Utilities for manipulating structs that implement 'loc'.
 pub mod locus;

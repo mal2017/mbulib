@@ -50,7 +50,7 @@ impl PositionScan for Contig<String, strand::ReqStrand> {
 #[cfg(test)]
 mod tests {
     use crate::locus::from_rec::*;
-    use crate::utility::scaffold_dict::ScaffoldDict;
+    use crate::scaffold_dict::ScaffoldDict;
     use bio_types::annot::contig::Contig;
     use rust_htslib::bam;
     use rust_htslib::bam::Read;
