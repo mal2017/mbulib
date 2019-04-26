@@ -11,6 +11,6 @@ crates and cli tools.
 
 ## Major goals:
 
-* easily ingest a bam as a bio::AnnotMap
+* easily ingest a bam and create an RQMap (wrapper around bio::AnnotMap)
 * easily filter or preprocess the reads during this process
 * easily query the ingested data by overlaps with bio_types::Contig

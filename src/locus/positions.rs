@@ -1,17 +1,14 @@
-use bio_types::annot::contig::Contig;
-use bio_types::annot::loc::Loc;
-use bio_types::annot::pos::Pos;
 use bio_types::strand;
+use bio_types::annot::{contig::Contig, loc::Loc, pos::Pos};
 
-/// Struct for iterator of positions within a Contig.
-#[derive(Debug)]
+/// This struct holds state for an iterator over the positions within a contiguous region.
+#[derive(Debug, Clone)]
 pub struct Positions<'a> {
     region: &'a Contig<String,strand::ReqStrand>,
     idx: isize,
 }
 
-// This returns and Options<Result> for now, in case I want to implement more error checking later
-/// Iterator for Pos within a Contig.
+/// This iterator produces the positions within a contiguous region.
 impl<'a> Iterator for Positions<'a> {
     type Item = Result<Pos<String, strand::ReqStrand>, &'static str>;
     fn next(&mut self) -> Option<Result<Pos<String, strand::ReqStrand>, &'static str>>
@@ -49,31 +46,26 @@ impl PositionScan for Contig<String, strand::ReqStrand> {
 
 #[cfg(test)]
 mod tests {
-    use crate::locus::from_rec::*;
-    use crate::scaffold_dict::ScaffoldDict;
+    use crate::{locus::from_rec::LocFromRec, scaffold_dict, locus::positions::*};
     use bio_types::annot::contig::Contig;
-    use rust_htslib::bam;
-    use rust_htslib::bam::Read;
+    use rust_htslib::bam::*;
     use std::path::Path;
     use crate::locus::positions::*;
-
 
     #[test]
     fn positions_from_contig() {
         let bampath = Path::new("test/hs.pe.test.bam");
-        let mut bam = bam::Reader::from_path(bampath).unwrap();
+        let mut bam = Reader::from_path(bampath).unwrap();
         let hdrv = bam.header();
-        let tidmap = ScaffoldDict::from_header_view(&hdrv);
-        let res = bam
+        let tidmap = scaffold_dict::ScaffoldDict::from_header_view(&hdrv);
+        let res: Vec< Contig<String,strand::ReqStrand> > = bam
             .records()
             .map(|a| a.unwrap())
-            .take(2)
+            .take(1)
             .map(|a| Contig::from_read(&a, false, &tidmap))
-            .map(|a| a.unwrap());
+            .map(|a| a.unwrap()).collect();
 
-        for i in res.into_iter() {
-            println!("\nREAD: {:?}",i);
-            i.positions().for_each(|a| println!("{:?}",a));
-        }
+
+
     }
 }

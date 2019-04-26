@@ -1,6 +1,6 @@
 [package]
 name = "rqmap"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 authors = ["Matt Lawlor <matt.a.lawlor@gmail.com>"]
 edition = "2018"
 
@@ -8,13 +8,11 @@ edition = "2018"
 bio = "0.25.0"
 bio-types = "0.4.0"
 rust-htslib = "0.22.0"
-itertools="*"
 quick-error="1.2.2"
-linear-map="1.2.0"
 
 [dev-dependencies]
 criterion = "0.2.11"
 
 [[bench]]
-name = "ngslib_benches"
+name = "rqmap_benches"
 harness = false

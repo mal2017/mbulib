@@ -1,6 +1,4 @@
 extern crate bio_types;
-extern crate itertools;
-extern crate linear_map;
 extern crate rust_htslib;
 
 #[macro_use]

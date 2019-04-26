@@ -41,7 +41,6 @@ mod tests {
     use crate::locus::from_rec::*;
     use crate::locus::shift::*;
     use crate::scaffold_dict::ScaffoldDict;
-    use bio::data_structures::annot_map::AnnotMap;
     use bio_types::annot::contig::Contig;
     use rust_htslib::bam;
     use rust_htslib::bam::Read;

@@ -7,17 +7,9 @@ use criterion::black_box;
 
 extern crate rqmap;
 
-use bio::data_structures::annot_map::AnnotMap;
 use rust_htslib::bam;
 use std::path::Path;
-use rust_htslib::bam::Read;
-use bio_types::annot::contig::Contig;
-use bio_types::annot::loc::Loc;
-use rqmap::ngslibrary::*;
-use rqmap::locus::shift::*;
-use rqmap::scaffold_dict::*;
-use rust_htslib::bam::HeaderView;
-use bio_types::strand::ReqStrand;
+use rqmap::rqmap::*;
 
 
 fn reads_into_ngslib() {
@@ -25,7 +17,7 @@ fn reads_into_ngslib() {
     let bam = bam::Reader::from_path(bampath).unwrap();
 
     // TODO Work on this test
-    let _r = NGSLibrary::from_reader(bam, LibraryType::Unstranded, None);
+    let _r = RQMap::from_reader(bam, LibraryType::Unstranded, None);
 
 }
 
