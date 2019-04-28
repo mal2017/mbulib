@@ -13,8 +13,7 @@ impl<'a> Iterator for Positions<'a> {
     type Item = Result<Pos<String, strand::ReqStrand>, &'static str>;
     fn next(&mut self) -> Option<Result<Pos<String, strand::ReqStrand>, &'static str>>
         {
-            let w = self.region.length();
-        match (self.idx as usize) < w {
+        match (self.idx as usize) < self.region.length() {
             true => {
                 let strand: strand::ReqStrand = self.region.strand().into();
                 let refid: String = self.region.refid().to_string();

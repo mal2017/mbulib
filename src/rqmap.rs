@@ -33,6 +33,23 @@ impl<T: Iterator<Item=bam::Record>> IntoAnnotMap for T {
 }
 
 
+trait AppendRecord {
+    fn append(&mut self, r: &bam::Record, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), &'static str>;
+}
+
+impl AppendRecord for AnnotMap<String, Contig<String,ReqStrand>> {
+    fn append(&mut self, r: &bam::Record, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
+
+        match pf {
+            None => self.insert_loc(Contig::from_read(r, false, sd).unwrap()),
+            Some(f) => self.insert_loc(f(Contig::from_read(r, false, sd).unwrap())),
+        }
+
+        Ok(())
+    }
+}
+
+
 #[derive(Debug)]
 pub enum LibraryType {
     R1Sense,
@@ -67,20 +84,37 @@ impl<T: Read> RQMap<T> {
 
 impl RQMap<bam::Reader> {
     /// TODO add filter for raw reads
-    /// Create an RQMap from an indexed bam reader.
+    // pub fn from_reader(mut b: bam::Reader, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
+    //     let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
+    //     let hd: HeaderView = b.header().clone();
+    //     let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
+    //     let _r = b.records()
+    //                 .map(|a| a.unwrap())
+    //                 .add_to(&mut map, &sd, pf);
+    //     RQMap {
+    //         reader: b,
+    //         construction: lt,
+    //         map: map,
+    //     }
+    // }
     pub fn from_reader(mut b: bam::Reader, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
-        let _r = b.records()
-                    .map(|a| a.unwrap())
-                    .add_to(&mut map, &sd, pf);
+        let mut r: bam::Record = bam::Record::new();
+
+        while let Ok(_r) = b.read(&mut r) {
+            map.append(&r, &sd, &pf);
+        }
+
         RQMap {
             reader: b,
             construction: lt,
             map: map,
         }
     }
+
+
 }
 
 impl RQMap<bam::IndexedReader> {
