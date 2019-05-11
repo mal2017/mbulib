@@ -119,22 +119,52 @@ impl RQMap<bam::Reader> {
 
 impl RQMap<bam::IndexedReader> {
     /// Create an RQMap from an indexed bam reader.
+    // pub fn from_indexed(mut b: bam::IndexedReader, c: Vec<Contig<String,ReqStrand>>, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
+    //     let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
+    //     let hd: HeaderView = b.header().clone();
+    //     let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
+    //
+    //     for x in c.into_iter() {
+    //         let chr = match sd.str_to_id(&x.refid()) {
+    //             Some(i) => i as u32,
+    //             None => continue,
+    //         };
+    //         let c1 = x.first_pos().start() as u32;
+    //         let c2 = x.last_pos().start() as u32;
+    //         b.fetch(chr, min(c1,c2), max(c1,c2));
+    //         b.records()
+    //          .map(|a| a.unwrap())
+    //          .add_to(&mut map, &sd, pf);
+    //     }
+    //
+    //     RQMap {
+    //         reader: b,
+    //         construction: lt,
+    //         map: map,
+    //     }
+    // }
     pub fn from_indexed(mut b: bam::IndexedReader, c: Vec<Contig<String,ReqStrand>>, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
 
+        let mut chr: u32;
+        let mut c1: u32;
+        let mut c2: u32;
+
         for x in c.into_iter() {
-            let chr = match sd.str_to_id(&x.refid()) {
+            chr = match sd.str_to_id(&x.refid()) {
                 Some(i) => i as u32,
                 None => continue,
             };
-            let c1 = x.first_pos().start() as u32;
-            let c2 = x.last_pos().start() as u32;
+            c1 = x.first_pos().start() as u32;
+            c2 = x.last_pos().start() as u32;
             b.fetch(chr, min(c1,c2), max(c1,c2));
-            b.records()
-             .map(|a| a.unwrap())
-             .add_to(&mut map, &sd, pf);
+
+            let mut r: bam::Record = bam::Record::new();
+            while let Ok(_r) = b.read(&mut r) {
+                map.append(&r, &sd, &pf);
+            }
         }
 
         RQMap {
@@ -144,9 +174,6 @@ impl RQMap<bam::IndexedReader> {
         }
     }
 }
-
-
-
 
 #[cfg(test)]
 mod tests {
