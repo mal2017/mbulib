@@ -11,28 +11,6 @@ use crate::locus::positions::PositionScan;
 use rust_htslib::bam::Read;
 use std::cmp::{min, max};
 
-trait IntoAnnotMap{
-    fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, sd: &ScaffoldDict, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str>;
-}
-
-
-impl<T: Iterator<Item=bam::Record>> IntoAnnotMap for T {
-    fn add_to(self, am: &mut AnnotMap<String, Contig<String,ReqStrand>>, sd: &ScaffoldDict, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
-
-        match pf {
-            None => {self.map(|a| Contig::from_read(&a, false, sd))
-                         .map(|a| a.unwrap())
-                         .for_each(|a| am.insert_loc(a));},
-            Some(f) => {self.map(|a| Contig::from_read(&a, false, sd))
-                            .map(|a| a.unwrap())
-                            .map(|a| f(a)).for_each(|a| am.insert_loc(a));},
-        }
-
-        Ok(())
-    }
-}
-
-
 trait AppendRecord {
     fn append(&mut self, r: &bam::Record, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), &'static str>;
 }
@@ -59,15 +37,14 @@ pub enum LibraryType {
 
 /// Struct holds a library of NGS reads as an AnnotMap, as well as the original reader struct
 /// and strandedness information.
+// TODO add additional filtering functions for records
 #[derive(Debug)]
-pub struct RQMap<T>
-    where T: bam::Read {
-    reader: T,
+pub struct RQMap {
     construction: LibraryType,
     map: AnnotMap<String, Contig<String,ReqStrand>>,
 }
 
-impl<T: Read> RQMap<T> {
+impl RQMap {
     /// Retrieve the coverage at a pointlike locus.
     pub fn coverage_at<D: Into<ReqStrand>>(&self, p: &Pos<String, D>) -> usize {
         self.map.find(p).count()
@@ -79,24 +56,6 @@ impl<T: Read> RQMap<T> {
          .map(|a| self.coverage_at(&a))
          .collect()
     }
-}
-
-
-impl RQMap<bam::Reader> {
-    /// TODO add filter for raw reads
-    // pub fn from_reader(mut b: bam::Reader, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
-    //     let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
-    //     let hd: HeaderView = b.header().clone();
-    //     let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
-    //     let _r = b.records()
-    //                 .map(|a| a.unwrap())
-    //                 .add_to(&mut map, &sd, pf);
-    //     RQMap {
-    //         reader: b,
-    //         construction: lt,
-    //         map: map,
-    //     }
-    // }
     pub fn from_reader(mut b: bam::Reader, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
@@ -108,41 +67,12 @@ impl RQMap<bam::Reader> {
         }
 
         RQMap {
-            reader: b,
             construction: lt,
             map: map,
         }
     }
 
-
-}
-
-impl RQMap<bam::IndexedReader> {
     /// Create an RQMap from an indexed bam reader.
-    // pub fn from_indexed(mut b: bam::IndexedReader, c: Vec<Contig<String,ReqStrand>>, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
-    //     let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
-    //     let hd: HeaderView = b.header().clone();
-    //     let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
-    //
-    //     for x in c.into_iter() {
-    //         let chr = match sd.str_to_id(&x.refid()) {
-    //             Some(i) => i as u32,
-    //             None => continue,
-    //         };
-    //         let c1 = x.first_pos().start() as u32;
-    //         let c2 = x.last_pos().start() as u32;
-    //         b.fetch(chr, min(c1,c2), max(c1,c2));
-    //         b.records()
-    //          .map(|a| a.unwrap())
-    //          .add_to(&mut map, &sd, pf);
-    //     }
-    //
-    //     RQMap {
-    //         reader: b,
-    //         construction: lt,
-    //         map: map,
-    //     }
-    // }
     pub fn from_indexed(mut b: bam::IndexedReader, c: Vec<Contig<String,ReqStrand>>, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
@@ -168,12 +98,13 @@ impl RQMap<bam::IndexedReader> {
         }
 
         RQMap {
-            reader: b,
             construction: lt,
             map: map,
         }
     }
+
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -194,23 +125,6 @@ mod tests {
         ReqStrand::Reverse => c.shift(5),
     };
     new.first_pos().contig()
-    }
-
-    #[test]
-    fn reads_into_annotmap() {
-        let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
-        let bampath = Path::new("test/hs.pe.test.bam");
-        let mut bam = bam::Reader::from_path(bampath).unwrap();
-        let hd: HeaderView = bam.header().clone();
-        let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
-        let res = bam
-            .records()
-            .take(5)
-            .map(|a| a.unwrap())
-            .add_to(&mut map, &sd, None);
-
-        // TODO work on this test
-        assert_eq!(res, Ok(()))
     }
 
     #[test]
