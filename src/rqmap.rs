@@ -45,6 +45,11 @@ pub struct RQMap {
 }
 
 impl RQMap {
+    /// Retrieve the counts within a locus.
+    pub fn counts_within<D: Into<ReqStrand>>(&self, p: &Contig<String, D>) -> usize {
+        self.map.find(p).count()
+    }
+
     /// Retrieve the coverage at a pointlike locus.
     pub fn coverage_at<D: Into<ReqStrand>>(&self, p: &Pos<String, D>) -> usize {
         self.map.find(p).count()
@@ -56,6 +61,8 @@ impl RQMap {
          .map(|a| self.coverage_at(&a))
          .collect()
     }
+
+
     pub fn from_reader(mut b: bam::Reader, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
