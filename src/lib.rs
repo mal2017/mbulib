@@ -1,3 +1,12 @@
+// Copyright 2018-2019 Matt Lawlor.
+// Licensed under the MIT license (http://opensource.org/licenses/MIT)
+// This file may not be copied, modified, or distributed
+// except according to those terms.
+//!
+//! RQMap is a crate for reading bam files into a queryable map object (Read Query Map).
+//! Methods are provided for generating RQMaps, filtering or modifying reads, and quantifying
+//! signal within regions.
+
 extern crate bio_types;
 extern crate rust_htslib;
 

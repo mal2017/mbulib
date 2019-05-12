@@ -35,7 +35,7 @@ pub enum LibraryType {
     Unstranded,
 }
 
-/// Struct holds a library of NGS reads as an AnnotMap, as well as the original reader struct
+/// Struct holds a library of NGS reads as an AnnotMap
 /// and strandedness information.
 // TODO add additional filtering functions for records
 #[derive(Debug)]
@@ -62,7 +62,7 @@ impl RQMap {
          .collect()
     }
 
-
+    /// Create an RQMap from a bam reader.
     pub fn from_reader(mut b: bam::Reader, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
