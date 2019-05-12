@@ -12,15 +12,15 @@ use rust_htslib::bam::Read;
 use std::cmp::{min, max};
 
 trait AppendRecord {
-    fn append(&mut self, r: &bam::Record, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), &'static str>;
+    fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), &'static str>;
 }
 
 impl AppendRecord for AnnotMap<String, Contig<String,ReqStrand>> {
-    fn append(&mut self, r: &bam::Record, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
+    fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
 
         match pf {
-            None => self.insert_loc(Contig::from_read(r, false, sd).unwrap()),
-            Some(f) => self.insert_loc(f(Contig::from_read(r, false, sd).unwrap())),
+            None => self.insert_loc(Contig::from_read(r, as_frags, sd).unwrap()),
+            Some(f) => self.insert_loc(f(Contig::from_read(r, as_frags, sd).unwrap())),
         }
 
         Ok(())
@@ -63,6 +63,7 @@ impl RQMap {
 
     /// Create an RQMap from a bam reader.
     pub fn from_reader(mut b: bam::Reader,
+                          as_frags: bool,
                           lt: LibraryType,
                           rf: Option<fn(&bam::Record) -> bool>,
                           pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
@@ -73,10 +74,10 @@ impl RQMap {
 
         while let Ok(_r) = b.read(&mut r) {
             match rf {
-                None => map.append(&r, &sd, &pf),
+                None => map.append(&r, as_frags, &sd, &pf),
                 Some(f) => {
                     match f(&r) {
-                        True => map.append(&r, &sd, &pf),
+                        True => map.append(&r, as_frags, &sd, &pf),
                         False => continue,
                     }
                 }
@@ -92,6 +93,7 @@ impl RQMap {
 
     /// Create an RQMap from an indexed bam reader.
     pub fn from_indexed(mut b: bam::IndexedReader,
+                            as_frags: bool,
                             c: Vec<Contig<String,ReqStrand>>,
                             lt: LibraryType,
                             rf: Option<fn(&bam::Record) -> bool>,
@@ -116,10 +118,10 @@ impl RQMap {
             let mut r: bam::Record = bam::Record::new();
             while let Ok(_r) = b.read(&mut r) {
                 match rf {
-                    None => map.append(&r, &sd, &pf),
+                    None => map.append(&r, as_frags, &sd, &pf),
                     Some(f) => {
                         match f(&r) {
-                            True => map.append(&r, &sd, &pf),
+                            True => map.append(&r, as_frags, &sd, &pf),
                             False => continue,
                         }
                     }
@@ -164,7 +166,7 @@ mod tests {
         let bam = bam::Reader::from_path(bampath).unwrap();
 
         // TODO Work on this test
-        let _r = RQMap::from_reader(bam, LibraryType::Unstranded, None, None);
+        let _r = RQMap::from_reader(bam, false, LibraryType::Unstranded, None, None);
 
     }
 
@@ -175,7 +177,7 @@ mod tests {
 
 
         // TODO work on this test
-        let _r = RQMap::from_reader(bam, LibraryType::Unstranded, None, Some(tn5shift));
+        let _r = RQMap::from_reader(bam, false, LibraryType::Unstranded, None, Some(tn5shift));
 
     }
 
@@ -191,6 +193,7 @@ mod tests {
                                                      ReqStrand::Forward);
 
         let _r = RQMap::from_indexed(bam,
+                                         false,
                                          vec!(c1),
                                          LibraryType::Unstranded,
                                          None,
@@ -208,6 +211,7 @@ mod tests {
                                                      ReqStrand::Forward);
 
         let r = RQMap::from_indexed(bam,
+                                        false,
                                         vec!(c0.clone()),
                                         LibraryType::Unstranded,
                                         None,

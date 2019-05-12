@@ -18,7 +18,7 @@ fn rqmap_from_reader() {
     let bam = bam::Reader::from_path(bampath).unwrap();
 
     // TODO Work on this test
-    let _r = RQMap::from_reader(bam, LibraryType::Unstranded, None, None);
+    let _r = RQMap::from_reader(bam, false, LibraryType::Unstranded, None, None);
 
 }
 
@@ -32,7 +32,7 @@ fn rqmap_from_indexed() {
                                                  ReqStrand::Forward);
 
     // TODO Work on this test
-    let _r = RQMap::from_indexed(bam, vec!(c0), LibraryType::Unstranded, None, None);
+    let _r = RQMap::from_indexed(bam, false, vec!(c0), LibraryType::Unstranded, None, None);
 
 }
 
