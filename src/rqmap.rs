@@ -37,7 +37,6 @@ pub enum LibraryType {
 
 /// Struct holds a library of NGS reads as an AnnotMap
 /// and strandedness information.
-// TODO add additional filtering functions for records
 #[derive(Debug)]
 pub struct RQMap {
     construction: LibraryType,
@@ -63,14 +62,26 @@ impl RQMap {
     }
 
     /// Create an RQMap from a bam reader.
-    pub fn from_reader(mut b: bam::Reader, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
+    pub fn from_reader(mut b: bam::Reader,
+                          lt: LibraryType,
+                          rf: Option<fn(&bam::Record) -> bool>,
+                          pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
         let mut r: bam::Record = bam::Record::new();
 
         while let Ok(_r) = b.read(&mut r) {
-            map.append(&r, &sd, &pf);
+            match rf {
+                None => map.append(&r, &sd, &pf),
+                Some(f) => {
+                    match f(&r) {
+                        True => map.append(&r, &sd, &pf),
+                        False => continue,
+                    }
+                }
+            };
+
         }
 
         RQMap {
@@ -80,7 +91,11 @@ impl RQMap {
     }
 
     /// Create an RQMap from an indexed bam reader.
-    pub fn from_indexed(mut b: bam::IndexedReader, c: Vec<Contig<String,ReqStrand>>, lt: LibraryType, pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
+    pub fn from_indexed(mut b: bam::IndexedReader,
+                            c: Vec<Contig<String,ReqStrand>>,
+                            lt: LibraryType,
+                            rf: Option<fn(&bam::Record) -> bool>,
+                            pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
         let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
@@ -100,7 +115,16 @@ impl RQMap {
 
             let mut r: bam::Record = bam::Record::new();
             while let Ok(_r) = b.read(&mut r) {
-                map.append(&r, &sd, &pf);
+                match rf {
+                    None => map.append(&r, &sd, &pf),
+                    Some(f) => {
+                        match f(&r) {
+                            True => map.append(&r, &sd, &pf),
+                            False => continue,
+                        }
+                    }
+                };
+
             }
         }
 
@@ -140,7 +164,7 @@ mod tests {
         let bam = bam::Reader::from_path(bampath).unwrap();
 
         // TODO Work on this test
-        let _r = RQMap::from_reader(bam, LibraryType::Unstranded, None);
+        let _r = RQMap::from_reader(bam, LibraryType::Unstranded, None, None);
 
     }
 
@@ -151,7 +175,7 @@ mod tests {
 
 
         // TODO work on this test
-        let _r = RQMap::from_reader(bam, LibraryType::Unstranded, Some(tn5shift));
+        let _r = RQMap::from_reader(bam, LibraryType::Unstranded, None, Some(tn5shift));
 
     }
 
@@ -169,6 +193,7 @@ mod tests {
         let _r = RQMap::from_indexed(bam,
                                          vec!(c1),
                                          LibraryType::Unstranded,
+                                         None,
                                          None);
         }
 
@@ -185,6 +210,7 @@ mod tests {
         let r = RQMap::from_indexed(bam,
                                         vec!(c0.clone()),
                                         LibraryType::Unstranded,
+                                        None,
                                         Some(tn5shift));
         println!("COV ACROSS: {:?}", r);
 
