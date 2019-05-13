@@ -237,7 +237,7 @@ mod tests {
                                              None);
     }
 
-    fn rqmap_from_indexed_filt() {
+    fn rqmap_from_indexed_preproc() {
         let bampath = Path::new("test/hs.pe.test.bam");
         let bam = bam::IndexedReader::from_path(bampath).unwrap();
 
