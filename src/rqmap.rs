@@ -15,6 +15,8 @@ trait AppendRecord {
     fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), &'static str>;
 }
 
+
+// TODO: handle unmapped??
 impl AppendRecord for AnnotMap<String, Contig<String,ReqStrand>> {
     fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
 
@@ -62,6 +64,7 @@ impl RQMap {
     }
 
     /// Create an RQMap from a bam reader.
+    // TODO: descriptive error on unmapped?
     pub fn from_reader(mut b: bam::Reader,
                           as_frags: bool,
                           lt: LibraryType,
@@ -92,6 +95,7 @@ impl RQMap {
     }
 
     /// Create an RQMap from an indexed bam reader.
+    // TODO: descriptive error on unmapped?
     pub fn from_indexed(mut b: bam::IndexedReader,
                             as_frags: bool,
                             c: Vec<Contig<String,ReqStrand>>,
@@ -153,15 +157,19 @@ mod tests {
     use bio_types::strand::ReqStrand;
 
     fn tn5shift(c: Contig<String,ReqStrand>) -> Contig<String,ReqStrand> {
-    let new = match c.strand() {
-        ReqStrand::Forward => c.shift(4),
-        ReqStrand::Reverse => c.shift(5),
-    };
-    new.first_pos().contig()
+        let new = match c.strand() {
+            ReqStrand::Forward => c.shift(4),
+            ReqStrand::Reverse => c.shift(5),
+        };
+        new.first_pos().contig()
+    }
+
+    fn mapq_filt(b: &bam::Record) -> bool {
+        b.mapq() > 30
     }
 
     #[test]
-    fn reads_into_ngslib() {
+    fn rqmap_from_reader() {
         let bampath = Path::new("test/hs.pe.test.bam");
         let bam = bam::Reader::from_path(bampath).unwrap();
 
@@ -171,7 +179,17 @@ mod tests {
     }
 
     #[test]
-    fn reads_into_ngslib_preproc() {
+    fn rqmap_from_reader_filt() {
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let bam = bam::Reader::from_path(bampath).unwrap();
+
+
+        // TODO work on this test
+        let _r = RQMap::from_reader(bam, false, LibraryType::Unstranded, Some(mapq_filt), None);
+
+    }
+
+    fn rqmap_from_reader_preproc() {
         let bampath = Path::new("test/hs.pe.test.bam");
         let bam = bam::Reader::from_path(bampath).unwrap();
 
@@ -182,7 +200,7 @@ mod tests {
     }
 
     #[test]
-    fn indexed_reads_into_ngslib() {
+    fn rqmap_from_indexed() {
         let bampath = Path::new("test/hs.pe.test.bam");
         let bam = bam::IndexedReader::from_path(bampath).unwrap();
 
@@ -201,6 +219,43 @@ mod tests {
         }
 
     #[test]
+    fn rqmap_from_indexed_filt() {
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let bam = bam::IndexedReader::from_path(bampath).unwrap();
+
+
+        let c1: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
+                                                         1000000,
+                                                         1000000,
+                                                         ReqStrand::Forward);
+
+        let _r = RQMap::from_indexed(bam,
+                                             false,
+                                             vec!(c1),
+                                             LibraryType::Unstranded,
+                                             Some(mapq_filt),
+                                             None);
+    }
+
+    fn rqmap_from_indexed_filt() {
+        let bampath = Path::new("test/hs.pe.test.bam");
+        let bam = bam::IndexedReader::from_path(bampath).unwrap();
+
+
+        let c1: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
+                                                         1000000,
+                                                         1000000,
+                                                         ReqStrand::Forward);
+
+        let _r = RQMap::from_indexed(bam,
+                                             false,
+                                             vec!(c1),
+                                             LibraryType::Unstranded,
+                                             None,
+                                             Some(tn5shift));
+    }
+
+    #[test]
     fn coverage_across_region() {
         let bampath = Path::new("test/hs.pe.test.bam");
         let bam = bam::IndexedReader::from_path(bampath).unwrap();
@@ -215,10 +270,7 @@ mod tests {
                                         vec!(c0.clone()),
                                         LibraryType::Unstranded,
                                         None,
-                                        Some(tn5shift));
-        println!("COV ACROSS: {:?}", r);
-
-        println!("COV ACROSS: {:?}", r.coverage_across(&c0));
+                                        None);
 
         }
 
