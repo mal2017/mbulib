@@ -8,7 +8,7 @@ use std::cmp::min;
 
 
 pub trait LocFromRec {
-    /// From a bam record create a struct implementing @Loc.
+    /// From a bam record create a struct implementing Loc.
     fn from_read(rec: &bam::Record, frag: bool, sd: &ScaffoldDict) -> Result<Self, InvalidRecordError>
     where
         Self: Loc + Sized;

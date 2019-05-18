@@ -64,7 +64,7 @@ mod tests {
             .map(|a| Contig::from_read(&a, false, &tidmap))
             .map(|a| a.unwrap()).collect();
 
-
+        let pos = res[0].positions();
 
     }
 }

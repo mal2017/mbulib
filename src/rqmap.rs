@@ -45,6 +45,7 @@ pub struct RQMap {
     map: AnnotMap<String, Contig<String,ReqStrand>>,
 }
 
+// TODO: when is_frag only add plus strand reads as frag
 impl RQMap {
     /// Retrieve the counts within a locus.
     pub fn counts_within<D: Into<ReqStrand>>(&self, p: &Contig<String, D>) -> usize {
@@ -109,7 +110,8 @@ impl RQMap {
         let mut chr: u32;
         let mut c1: u32;
         let mut c2: u32;
-
+        let mut r: bam::Record = bam::Record::new();
+        
         for x in c.into_iter() {
             chr = match sd.str_to_id(&x.refid()) {
                 Some(i) => i as u32,
@@ -119,7 +121,6 @@ impl RQMap {
             c2 = x.last_pos().start() as u32;
             b.fetch(chr, min(c1,c2), max(c1,c2));
 
-            let mut r: bam::Record = bam::Record::new();
             while let Ok(_r) = b.read(&mut r) {
                 match rf {
                     None => map.append(&r, as_frags, &sd, &pf),
