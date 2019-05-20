@@ -42,19 +42,20 @@ pub enum LibraryType {
 #[derive(Debug)]
 pub struct RQMap {
     construction: LibraryType,
-    map: AnnotMap<String, Contig<String,ReqStrand>>,
+    plus: AnnotMap<String, Contig<String,ReqStrand>>,
+    minus: AnnotMap<String, Contig<String,ReqStrand>>
 }
 
 // TODO: when is_frag only add plus strand reads as frag
 impl RQMap {
     /// Retrieve the counts within a locus.
     pub fn counts_within<D: Into<ReqStrand>>(&self, p: &Contig<String, D>) -> usize {
-        self.map.find(p).count()
+        self.plus.find(p).count() + self.minus.find(p).count()
     }
 
     /// Retrieve the coverage at a pointlike locus.
     pub fn coverage_at<D: Into<ReqStrand>>(&self, p: &Pos<String, D>) -> usize {
-        self.map.find(p).count()
+        self.plus.find(p).count() + self.minus.find(p).count()
     }
     /// Retrieve the coverage across a contiguous locus.
     pub fn coverage_across(&self, c: &Contig<String, ReqStrand>) -> Vec<usize> {
@@ -71,17 +72,25 @@ impl RQMap {
                           lt: LibraryType,
                           rf: Option<fn(&bam::Record) -> bool>,
                           pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
-        let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
+        let mut plus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
+        let mut minus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
         let mut r: bam::Record = bam::Record::new();
 
+        // map
         while let Ok(_r) = b.read(&mut r) {
             match rf {
-                None => map.append(&r, as_frags, &sd, &pf),
+                None => { match r.is_reverse() {
+                    True => minus.append(&r, as_frags, &sd, &pf),
+                    False => plus.append(&r, as_frags, &sd, &pf),
+                } },
                 Some(f) => {
                     match f(&r) {
-                        True => map.append(&r, as_frags, &sd, &pf),
+                        True => { match r.is_reverse() {
+                            True => minus.append(&r, as_frags, &sd, &pf),
+                            False => plus.append(&r, as_frags, &sd, &pf),
+                        } },
                         False => continue,
                     }
                 }
@@ -91,7 +100,8 @@ impl RQMap {
 
         RQMap {
             construction: lt,
-            map: map,
+            plus: plus,
+            minus: minus
         }
     }
 
@@ -103,7 +113,8 @@ impl RQMap {
                             lt: LibraryType,
                             rf: Option<fn(&bam::Record) -> bool>,
                             pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
-        let mut map: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
+        let mut plus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
+        let mut minus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
 
@@ -123,10 +134,16 @@ impl RQMap {
 
             while let Ok(_r) = b.read(&mut r) {
                 match rf {
-                    None => map.append(&r, as_frags, &sd, &pf),
+                    None => { match r.is_reverse() {
+                        True => minus.append(&r, as_frags, &sd, &pf),
+                        False => plus.append(&r, as_frags, &sd, &pf),
+                    } },
                     Some(f) => {
                         match f(&r) {
-                            True => map.append(&r, as_frags, &sd, &pf),
+                            True => { match r.is_reverse() {
+                                True => minus.append(&r, as_frags, &sd, &pf),
+                                False => plus.append(&r, as_frags, &sd, &pf),
+                            } },
                             False => continue,
                         }
                     }
@@ -137,7 +154,8 @@ impl RQMap {
 
         RQMap {
             construction: lt,
-            map: map,
+            plus: plus,
+            minus: minus,
         }
     }
 
