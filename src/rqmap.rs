@@ -111,7 +111,7 @@ impl RQMap {
         let mut c1: u32;
         let mut c2: u32;
         let mut r: bam::Record = bam::Record::new();
-        
+
         for x in c.into_iter() {
             chr = match sd.str_to_id(&x.refid()) {
                 Some(i) => i as u32,
@@ -189,7 +189,7 @@ mod tests {
         let _r = RQMap::from_reader(bam, false, LibraryType::Unstranded, Some(mapq_filt), None);
 
     }
-
+    #[test]
     fn rqmap_from_reader_preproc() {
         let bampath = Path::new("test/hs.pe.test.bam");
         let bam = bam::Reader::from_path(bampath).unwrap();
@@ -238,6 +238,7 @@ mod tests {
                                              None);
     }
 
+    #[test]
     fn rqmap_from_indexed_preproc() {
         let bampath = Path::new("test/hs.pe.test.bam");
         let bam = bam::IndexedReader::from_path(bampath).unwrap();
