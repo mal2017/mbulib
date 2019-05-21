@@ -10,19 +10,20 @@ use crate::scaffold_dict::ScaffoldDict;
 use crate::locus::positions::PositionScan;
 use rust_htslib::bam::Read;
 use std::cmp::{min, max};
+use crate::errors::*;
 
 trait AppendRecord {
-    fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), &'static str>;
+    fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), InvalidRecordError>;
 }
 
 
 // TODO: handle unmapped??
 impl AppendRecord for AnnotMap<String, Contig<String,ReqStrand>> {
-    fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), &'static str> {
+    fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), InvalidRecordError> {
 
         match pf {
-            None => self.insert_loc(Contig::from_read(r, as_frags, sd).unwrap()),
-            Some(f) => self.insert_loc(f(Contig::from_read(r, as_frags, sd).unwrap())),
+            None => self.insert_loc(Contig::from_read(r, as_frags, sd)?),
+            Some(f) => self.insert_loc(f(Contig::from_read(r, as_frags, sd)?)),
         }
 
         Ok(())

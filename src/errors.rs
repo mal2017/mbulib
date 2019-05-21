@@ -7,5 +7,8 @@ quick_error! {
         UnknownScaffold {
             description("Record tid not present in provided scaffold dict")
         }
+        UnpairedRecord {
+            description("Record is unpaired but your library interpretation requires pairs")
+        }
     }
 }
