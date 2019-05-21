@@ -65,6 +65,38 @@ impl RQMap {
          .collect()
     }
 
+    pub fn plus_counts_within<D: Into<ReqStrand>>(&self, p: &Contig<String, D>) -> usize {
+        self.plus.find(p).count()
+    }
+
+    /// Retrieve the coverage at a pointlike locus.
+    pub fn plus_coverage_at<D: Into<ReqStrand>>(&self, p: &Pos<String, D>) -> usize {
+        self.plus.find(p).count()
+    }
+    /// Retrieve the coverage across a contiguous locus.
+    pub fn plus_coverage_across(&self, c: &Contig<String, ReqStrand>) -> Vec<usize> {
+        c.positions()
+         .map(|a| a.unwrap())
+         .map(|a| self.plus_coverage_at(&a))
+         .collect()
+    }
+
+    pub fn minus_counts_within<D: Into<ReqStrand>>(&self, p: &Contig<String, D>) -> usize {
+        self.minus.find(p).count()
+    }
+
+    /// Retrieve the coverage at a pointlike locus.
+    pub fn minus_coverage_at<D: Into<ReqStrand>>(&self, p: &Pos<String, D>) -> usize {
+        self.minus.find(p).count()
+    }
+    /// Retrieve the coverage across a contiguous locus.
+    pub fn minus_coverage_across(&self, c: &Contig<String, ReqStrand>) -> Vec<usize> {
+        c.positions()
+         .map(|a| a.unwrap())
+         .map(|a| self.minus_coverage_at(&a))
+         .collect()
+    }
+
     /// Create an RQMap from a bam reader.
     // TODO: descriptive error on unmapped?
     pub fn from_reader(mut b: bam::Reader,
