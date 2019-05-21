@@ -113,7 +113,7 @@ impl RQMap {
                           as_frags: bool,
                           lt: LibraryType,
                           rf: Option<fn(&bam::Record) -> bool>,
-                          pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
+                          pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<Self,InvalidRecordError> {
         let mut plus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let mut minus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
@@ -124,27 +124,27 @@ impl RQMap {
         while let Ok(_r) = b.read(&mut r) {
             match rf {
                 None => { match r.is_reverse() {
-                    True => minus.append(&r, as_frags, &sd, &pf),
-                    False => plus.append(&r, as_frags, &sd, &pf),
+                    true => minus.append(&r, as_frags, &sd, &pf)?,
+                    false => plus.append(&r, as_frags, &sd, &pf)?,
                 } },
                 Some(f) => {
                     match f(&r) {
-                        True => { match r.is_reverse() {
-                            True => minus.append(&r, as_frags, &sd, &pf),
-                            False => plus.append(&r, as_frags, &sd, &pf),
+                        true => { match r.is_reverse() {
+                            true => minus.append(&r, as_frags, &sd, &pf)?,
+                            false => plus.append(&r, as_frags, &sd, &pf)?,
                         } },
-                        False => continue,
+                        false => continue,
                     }
                 }
             };
 
         }
 
-        RQMap {
+        Ok(RQMap {
             construction: lt,
             plus: plus,
             minus: minus
-        }
+        })
     }
 
     /// Create an RQMap from an indexed bam reader.
@@ -154,7 +154,7 @@ impl RQMap {
                             c: Vec<Contig<String,ReqStrand>>,
                             lt: LibraryType,
                             rf: Option<fn(&bam::Record) -> bool>,
-                            pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Self {
+                            pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<Self,InvalidRecordError> {
         let mut plus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let mut minus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
@@ -172,21 +172,25 @@ impl RQMap {
             };
             c1 = x.first_pos().start() as u32;
             c2 = x.last_pos().start() as u32;
-            b.fetch(chr, min(c1,c2), max(c1,c2));
+
+            match b.fetch(chr, min(c1,c2), max(c1,c2)) {
+                Ok(_x) => {} ,
+                _ => return Err(InvalidRecordError::NoneSuchRecord),
+            };
 
             while let Ok(_r) = b.read(&mut r) {
                 match rf {
                     None => { match r.is_reverse() {
-                        True => minus.append(&r, as_frags, &sd, &pf),
-                        False => plus.append(&r, as_frags, &sd, &pf),
+                        true => minus.append(&r, as_frags, &sd, &pf)?,
+                        false => plus.append(&r, as_frags, &sd, &pf)?,
                     } },
                     Some(f) => {
                         match f(&r) {
-                            True => { match r.is_reverse() {
-                                True => minus.append(&r, as_frags, &sd, &pf),
-                                False => plus.append(&r, as_frags, &sd, &pf),
+                            true => { match r.is_reverse() {
+                                true => minus.append(&r, as_frags, &sd, &pf)?,
+                                false => plus.append(&r, as_frags, &sd, &pf)?,
                             } },
-                            False => continue,
+                            false => continue,
                         }
                     }
                 };
@@ -194,11 +198,11 @@ impl RQMap {
             }
         }
 
-        RQMap {
+        Ok(RQMap {
             construction: lt,
             plus: plus,
             minus: minus,
-        }
+        })
     }
 
 }

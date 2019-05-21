@@ -10,5 +10,8 @@ quick_error! {
         UnpairedRecord {
             description("Record is unpaired but your library interpretation requires pairs")
         }
+        NoneSuchRecord {
+            description("Unretrievable record")
+        }
     }
 }
