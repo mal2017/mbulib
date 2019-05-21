@@ -17,7 +17,6 @@ trait AppendRecord {
 }
 
 
-// TODO: handle unmapped??
 impl AppendRecord for AnnotMap<String, Contig<String,ReqStrand>> {
     fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), InvalidRecordError> {
 
@@ -30,12 +29,21 @@ impl AppendRecord for AnnotMap<String, Contig<String,ReqStrand>> {
     }
 }
 
-
 #[derive(Debug)]
 pub enum LibraryType {
     R1Sense,
     R2Sense,
     Unstranded,
+    ATAC,
+    DNASE,
+
+}
+
+#[derive(Debug)]
+pub enum CountStrand {
+    Plus,
+    Minus,
+    Both,
 }
 
 /// Struct holds a library of NGS reads as an AnnotMap
@@ -47,18 +55,18 @@ pub struct RQMap {
     minus: AnnotMap<String, Contig<String,ReqStrand>>
 }
 
-// TODO: when is_frag only add plus strand reads as frag
+// TODO: clean up this with enum logic
 impl RQMap {
-    /// Retrieve the counts within a locus.
+    /// Retrieve the counts within a locus for reads mapped to both strands.
     pub fn counts_within<D: Into<ReqStrand>>(&self, p: &Contig<String, D>) -> usize {
         self.plus.find(p).count() + self.minus.find(p).count()
     }
 
-    /// Retrieve the coverage at a pointlike locus.
+    /// Retrieve the coverage at a pointlike locus for reads mapped to both strands.
     pub fn coverage_at<D: Into<ReqStrand>>(&self, p: &Pos<String, D>) -> usize {
         self.plus.find(p).count() + self.minus.find(p).count()
     }
-    /// Retrieve the coverage across a contiguous locus.
+    /// Retrieve the coverage across a contiguous locus for reads mapped to both strands.
     pub fn coverage_across(&self, c: &Contig<String, ReqStrand>) -> Vec<usize> {
         c.positions()
          .map(|a| a.unwrap())
@@ -66,6 +74,7 @@ impl RQMap {
          .collect()
     }
 
+    /// Retrieve the counts within a locus for reads mapped to the plus strand.
     pub fn plus_counts_within<D: Into<ReqStrand>>(&self, p: &Contig<String, D>) -> usize {
         self.plus.find(p).count()
     }
