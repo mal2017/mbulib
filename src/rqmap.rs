@@ -1,7 +1,6 @@
 use rust_htslib::bam;
 use bio::data_structures::annot_map::*;
 use bio_types::annot::contig::Contig;
-use bio_types::annot::pos::Pos;
 use bio_types::annot::loc::Loc;
 use bio_types::strand::ReqStrand;
 use rust_htslib::bam::HeaderView;
@@ -105,7 +104,6 @@ impl RQMap {
     }
 
     /// Create an RQMap from an indexed bam reader.
-    // TODO: descriptive error on unmapped?
     pub fn from_indexed(mut b: bam::IndexedReader,
                             as_frags: bool,
                             c: Vec<Contig<String,ReqStrand>>,
@@ -202,11 +200,85 @@ mod tests {
     }
 
     #[test]
+    fn append_record_to_map() {
+
+    }
+
+    #[test]
+    fn append_unmapped_record_to_map() {
+
+    }
+
+    #[test]
+    fn quantify_pos() {
+
+    }
+
+    #[test]
+    fn quantify_contig() {
+
+    }
+
+    #[test]
+    fn quantify_bad_pos() {
+
+    }
+
+    #[test]
+    fn quantify_bad_contig() {
+
+    }
+
+    #[test]
+    fn coverage_across_region() {
+        let bam = make_indexed_reader();
+
+        let c0: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
+                                                     564475,
+                                                     60,
+                                                     ReqStrand::Forward);
+
+        let r = RQMap::from_indexed(bam,
+                                        false,
+                                        vec!(c0.clone()),
+                                        LibraryType::Unstranded,
+                                        None,
+                                        None).unwrap();
+
+        let cov = r.coverage_across(&c0,&CountStrand::Both);
+
+        println!("{:?}",cov);
+
+    }
+
+    #[test]
+    fn coverage_across_bad_region() {
+        let bam = make_indexed_reader();
+
+        let c0: Contig<String,ReqStrand> = Contig::new("chrZ".to_string(),
+                                                     564475,
+                                                     60,
+                                                     ReqStrand::Forward);
+
+        let r = RQMap::from_indexed(bam,
+                                        false,
+                                        vec!(c0.clone()),
+                                        LibraryType::Unstranded,
+                                        None,
+                                        None).unwrap();
+
+        let cov = r.coverage_across(&c0,&CountStrand::Both);
+
+        println!("{:?}",cov);
+
+    }
+
+    #[test]
     fn rqmap_from_reader() {
         let bam = make_reader();
 
         // TODO Work on this test
-        let _r = RQMap::from_reader(bam, false, LibraryType::Unstranded, None, None);
+        RQMap::from_reader(bam, false, LibraryType::Unstranded, None, None).unwrap();
 
     }
 
@@ -282,26 +354,6 @@ mod tests {
                                              Some(tn5shift));
     }
 
-    #[test]
-    fn coverage_across_region() {
-        let bam = make_indexed_reader();
 
-        let c0: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
-                                                     564475,
-                                                     60,
-                                                     ReqStrand::Forward);
-
-        let r = RQMap::from_indexed(bam,
-                                        false,
-                                        vec!(c0.clone()),
-                                        LibraryType::Unstranded,
-                                        None,
-                                        None).unwrap();
-
-        let cov = r.coverage_across(&c0,&CountStrand::Both);
-
-        println!("{:?}",cov);
-
-        }
 
 }
