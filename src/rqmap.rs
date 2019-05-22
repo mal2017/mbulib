@@ -35,12 +35,17 @@ impl AppendRecord for AnnotMap<String, Contig<String,ReqStrand>> {
 #[derive(Debug)]
 pub struct RQMap {
     construction: LibraryType,
+    depth: usize,
     plus: AnnotMap<String, Contig<String,ReqStrand>>,
     minus: AnnotMap<String, Contig<String,ReqStrand>>
 }
 
 
 impl RQMap {
+    pub fn depth(&self) -> usize {
+        self.depth
+    }
+
     /// Quantify the number of reads overlapping the provided locus.
     pub fn quantify<L>(&self, p: &L, ct: &CountStrand) -> usize
         where
@@ -72,12 +77,14 @@ impl RQMap {
         let hd: HeaderView = b.header().clone();
         let sd: ScaffoldDict = ScaffoldDict::from_header_view(&hd);
         let mut r: bam::Record = bam::Record::new();
+        let mut depth = 0;
 
         // map
         while let Ok(_r) = b.read(&mut r) {
             if r.is_unmapped() {
                 continue
             }
+
             match rf {
                 None => { match r.is_reverse() {
                     true => minus.append(&r, as_frags, &sd, &pf)?,
@@ -94,10 +101,13 @@ impl RQMap {
                 }
             };
 
+            depth += 1;
+
         }
 
         Ok(RQMap {
             construction: lt,
+            depth: depth,
             plus: plus,
             minus: minus
         })
@@ -119,6 +129,7 @@ impl RQMap {
         let mut c1: u32;
         let mut c2: u32;
         let mut r: bam::Record = bam::Record::new();
+        let mut depth = 0;
 
         for x in c.into_iter() {
             chr = match sd.str_to_id(&x.refid()) {
@@ -137,6 +148,7 @@ impl RQMap {
                 if r.is_unmapped() {
                     continue
                 }
+
                 match rf {
                     None => { match r.is_reverse() {
                         true => minus.append(&r, as_frags, &sd, &pf)?,
@@ -152,12 +164,14 @@ impl RQMap {
                         }
                     }
                 };
+                depth += 1;
 
             }
         }
 
         Ok(RQMap {
             construction: lt,
+            depth: depth,
             plus: plus,
             minus: minus,
         })
@@ -197,6 +211,20 @@ mod tests {
     fn make_indexed_reader() -> bam::IndexedReader {
         let bampath = Path::new("test/hs.pe.test.bam");
         bam::IndexedReader::from_path(bampath).unwrap()
+    }
+
+    #[test]
+    fn get_depth() {
+        let bam = make_reader();
+
+        let r = RQMap::from_reader(bam,
+            false,
+            LibraryType::ATAC,
+            None,
+            None).unwrap();
+
+        assert_eq!(212, r.depth());
+
     }
 
     #[test]
