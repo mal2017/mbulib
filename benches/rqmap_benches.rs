@@ -10,6 +10,7 @@ extern crate rqmap;
 use rust_htslib::bam;
 use std::path::Path;
 use rqmap::rqmap::*;
+use rqmap::library_strategy::*;
 use bio_types::annot::contig::Contig;
 use bio_types::strand::ReqStrand;
 

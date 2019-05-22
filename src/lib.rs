@@ -24,5 +24,8 @@ pub mod locus;
 /// Utilities for converting bams to usable data structures.
 pub mod rqmap;
 
+/// Tools for signalling data handling decisions
+pub mod library_strategy;
+
 /// Useful and descriptive errors
 pub mod errors;

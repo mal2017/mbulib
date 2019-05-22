@@ -11,6 +11,7 @@ use crate::locus::positions::PositionScan;
 use rust_htslib::bam::Read;
 use std::cmp::{min, max};
 use crate::errors::*;
+use crate::library_strategy::*;
 
 trait AppendRecord {
     fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), InvalidRecordError>;
@@ -29,22 +30,6 @@ impl AppendRecord for AnnotMap<String, Contig<String,ReqStrand>> {
     }
 }
 
-#[derive(Debug)]
-pub enum LibraryType {
-    R1Sense,
-    R2Sense,
-    Unstranded,
-    ATAC,
-    DNASE,
-
-}
-
-#[derive(Debug)]
-pub enum CountStrand {
-    Plus,
-    Minus,
-    Both,
-}
 
 /// Struct holds a library of NGS reads as an AnnotMap
 /// and strandedness information.
@@ -188,15 +173,12 @@ impl RQMap {
 
 #[cfg(test)]
 mod tests {
-    use bio::data_structures::annot_map::AnnotMap;
     use rust_htslib::bam;
     use std::path::Path;
-    use rust_htslib::bam::Read;
     use bio_types::annot::contig::Contig;
     use bio_types::annot::loc::Loc;
     use crate::rqmap::*;
     use crate::locus::shift::*;
-    use rust_htslib::bam::HeaderView;
     use bio_types::strand::ReqStrand;
 
     fn tn5shift(c: Contig<String,ReqStrand>) -> Contig<String,ReqStrand> {
