@@ -40,7 +40,7 @@ pub struct RQMap {
     minus: AnnotMap<String, Contig<String,ReqStrand>>
 }
 
-// TODO: clean up this with enum logic
+
 impl RQMap {
     /// Quantify the number of reads overlapping the provided locus.
     pub fn quantify<L>(&self, p: &L, ct: &CountStrand) -> usize
@@ -63,7 +63,6 @@ impl RQMap {
     }
 
     /// Create an RQMap from a bam reader.
-    // TODO: descriptive error on unmapped?
     pub fn from_reader(mut b: bam::Reader,
                           as_frags: bool,
                           lt: LibraryType,
@@ -78,7 +77,6 @@ impl RQMap {
         // map
         while let Ok(_r) = b.read(&mut r) {
             if r.is_unmapped() {
-                println!("Skipping unmapped record");
                 continue
             }
             match rf {
@@ -139,7 +137,6 @@ impl RQMap {
 
             while let Ok(_r) = b.read(&mut r) {
                 if r.is_unmapped() {
-                    println!("Skipping unmapped record");
                     continue
                 }
                 match rf {
