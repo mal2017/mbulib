@@ -57,24 +57,7 @@ pub struct RQMap {
 
 // TODO: clean up this with enum logic
 impl RQMap {
-    /// Retrieve the counts within a locus for reads mapped to both strands.
-    pub fn counts_within<D: Into<ReqStrand>>(&self, p: &Contig<String, D>, ct: &CountStrand) -> usize {
-        match ct {
-            CountStrand::Plus => self.plus.find(p).count(),
-            CountStrand::Minus => self.minus.find(p).count(),
-            CountStrand::Both => self.plus.find(p).count() + self.minus.find(p).count(),
-        }
-    }
-
-    /// Retrieve the coverage at a pointlike locus for reads mapped to both strands.
-    pub fn coverage_at<D: Into<ReqStrand>>(&self, p: &Pos<String, D>, ct: &CountStrand) -> usize {
-        match ct {
-            CountStrand::Plus => self.plus.find(p).count(),
-            CountStrand::Minus => self.minus.find(p).count(),
-            CountStrand::Both => self.plus.find(p).count() + self.minus.find(p).count(),
-        }
-    }
-
+    /// Quantify the number of reads overlapping the provided locus.
     pub fn quantify<L>(&self, p: &L, ct: &CountStrand) -> usize
         where
             L: Loc<RefID = String>,
@@ -90,7 +73,7 @@ impl RQMap {
     pub fn coverage_across(&self, c: &Contig<String, ReqStrand>, ct: &CountStrand) -> Vec<usize> {
         c.positions()
          .map(|a| a.unwrap())
-         .map(|a| self.coverage_at(&a, ct))
+         .map(|a| self.quantify(&a, ct))
          .collect()
     }
 
@@ -109,6 +92,10 @@ impl RQMap {
 
         // map
         while let Ok(_r) = b.read(&mut r) {
+            if r.is_unmapped() {
+                println!("Skipping unmapped record");
+                continue
+            }
             match rf {
                 None => { match r.is_reverse() {
                     true => minus.append(&r, as_frags, &sd, &pf)?,
@@ -166,6 +153,10 @@ impl RQMap {
             };
 
             while let Ok(_r) = b.read(&mut r) {
+                if r.is_unmapped() {
+                    println!("Skipping unmapped record");
+                    continue
+                }
                 match rf {
                     None => { match r.is_reverse() {
                         true => minus.append(&r, as_frags, &sd, &pf)?,
@@ -220,10 +211,20 @@ mod tests {
         b.mapq() > 30
     }
 
+    fn make_reader() -> bam::Reader {
+        let bampath = Path::new("test/hs.pe.test.bam");
+        bam::Reader::from_path(bampath).unwrap()
+    }
+
+
+    fn make_indexed_reader() -> bam::IndexedReader {
+        let bampath = Path::new("test/hs.pe.test.bam");
+        bam::IndexedReader::from_path(bampath).unwrap()
+    }
+
     #[test]
     fn rqmap_from_reader() {
-        let bampath = Path::new("test/hs.pe.test.bam");
-        let bam = bam::Reader::from_path(bampath).unwrap();
+        let bam = make_reader();
 
         // TODO Work on this test
         let _r = RQMap::from_reader(bam, false, LibraryType::Unstranded, None, None);
@@ -232,9 +233,7 @@ mod tests {
 
     #[test]
     fn rqmap_from_reader_filt() {
-        let bampath = Path::new("test/hs.pe.test.bam");
-        let bam = bam::Reader::from_path(bampath).unwrap();
-
+        let bam = make_reader();
 
         // TODO work on this test
         let _r = RQMap::from_reader(bam, false, LibraryType::Unstranded, Some(mapq_filt), None);
@@ -242,8 +241,7 @@ mod tests {
     }
     #[test]
     fn rqmap_from_reader_preproc() {
-        let bampath = Path::new("test/hs.pe.test.bam");
-        let bam = bam::Reader::from_path(bampath).unwrap();
+        let bam = make_reader();
 
 
         // TODO work on this test
@@ -253,8 +251,7 @@ mod tests {
 
     #[test]
     fn rqmap_from_indexed() {
-        let bampath = Path::new("test/hs.pe.test.bam");
-        let bam = bam::IndexedReader::from_path(bampath).unwrap();
+        let bam = make_indexed_reader();
 
 
         let c1: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
@@ -272,8 +269,7 @@ mod tests {
 
     #[test]
     fn rqmap_from_indexed_filt() {
-        let bampath = Path::new("test/hs.pe.test.bam");
-        let bam = bam::IndexedReader::from_path(bampath).unwrap();
+        let bam = make_indexed_reader();
 
 
         let c1: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
@@ -291,8 +287,7 @@ mod tests {
 
     #[test]
     fn rqmap_from_indexed_preproc() {
-        let bampath = Path::new("test/hs.pe.test.bam");
-        let bam = bam::IndexedReader::from_path(bampath).unwrap();
+        let bam = make_indexed_reader();
 
 
         let c1: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
@@ -310,8 +305,7 @@ mod tests {
 
     #[test]
     fn coverage_across_region() {
-        let bampath = Path::new("test/hs.pe.test.bam");
-        let bam = bam::IndexedReader::from_path(bampath).unwrap();
+        let bam = make_indexed_reader();
 
         let c0: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
                                                      564475,
@@ -323,7 +317,11 @@ mod tests {
                                         vec!(c0.clone()),
                                         LibraryType::Unstranded,
                                         None,
-                                        None);
+                                        None).unwrap();
+
+        let cov = r.coverage_across(&c0,&CountStrand::Both);
+
+        println!("{:?}",cov);
 
         }
 
