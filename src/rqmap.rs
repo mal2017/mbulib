@@ -185,6 +185,7 @@ mod tests {
     use rust_htslib::bam;
     use std::path::Path;
     use bio_types::annot::contig::Contig;
+    use bio_types::annot::pos::Pos;
     use bio_types::annot::loc::Loc;
     use crate::rqmap::*;
     use crate::locus::shift::*;
@@ -229,32 +230,92 @@ mod tests {
 
     #[test]
     fn append_record_to_map() {
-
+        assert!(false)
     }
 
     #[test]
     fn append_unmapped_record_to_map() {
-
+        assert!(false)
     }
 
     #[test]
     fn quantify_pos() {
+        let bam = make_indexed_reader();
+        let c0: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
+                                                     564480,
+                                                     500,
+                                                     ReqStrand::Forward);
 
+        let r = RQMap::from_indexed(bam,
+                                        false,
+                                        vec!(c0.clone()),
+                                        LibraryType::Unstranded,
+                                        None,
+                                        None).unwrap();
+
+        let ct = r.quantify(&c0.first_pos(),&CountStrand::Both);
+
+        assert_eq!(ct,1);
     }
 
     #[test]
     fn quantify_contig() {
+        let bam = make_indexed_reader();
+        let c0: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
+                                                     564475,
+                                                     500,
+                                                     ReqStrand::Forward);
 
+        let r = RQMap::from_indexed(bam,
+                                        false,
+                                        vec!(c0.clone()),
+                                        LibraryType::Unstranded,
+                                        None,
+                                        None).unwrap();
+
+        let ct = r.quantify(&c0,&CountStrand::Both);
+
+        assert_eq!(ct,4);
     }
 
     #[test]
     fn quantify_bad_pos() {
+        let bam = make_indexed_reader();
+        let c0: Contig<String,ReqStrand> = Contig::new("chrZ".to_string(),
+                                                     564480,
+                                                     500,
+                                                     ReqStrand::Forward);
 
+        let r = RQMap::from_indexed(bam,
+                                        false,
+                                        vec!(c0.clone()),
+                                        LibraryType::Unstranded,
+                                        None,
+                                        None).unwrap();
+
+        let ct = r.quantify(&c0.first_pos(),&CountStrand::Both);
+
+        assert_eq!(ct,0);
     }
 
     #[test]
     fn quantify_bad_contig() {
+        let bam = make_indexed_reader();
+        let c0: Contig<String,ReqStrand> = Contig::new("chrZ".to_string(),
+                                                     564475,
+                                                     500,
+                                                     ReqStrand::Forward);
 
+        let r = RQMap::from_indexed(bam,
+                                        false,
+                                        vec!(c0.clone()),
+                                        LibraryType::Unstranded,
+                                        None,
+                                        None).unwrap();
+
+        let ct = r.quantify(&c0,&CountStrand::Both);
+
+        assert_eq!(ct,0);
     }
 
     #[test]
@@ -262,8 +323,8 @@ mod tests {
         let bam = make_indexed_reader();
 
         let c0: Contig<String,ReqStrand> = Contig::new("chr1".to_string(),
-                                                     564475,
-                                                     60,
+                                                     564455,
+                                                     70,
                                                      ReqStrand::Forward);
 
         let r = RQMap::from_indexed(bam,
@@ -296,8 +357,7 @@ mod tests {
                                         None).unwrap();
 
         let cov = r.coverage_across(&c0,&CountStrand::Both);
-
-        println!("{:?}",cov);
+        assert!(false)
 
     }
 
@@ -307,7 +367,7 @@ mod tests {
 
         // TODO Work on this test
         RQMap::from_reader(bam, false, LibraryType::Unstranded, None, None).unwrap();
-
+        assert!(false)
     }
 
     #[test]
@@ -316,7 +376,7 @@ mod tests {
 
         // TODO work on this test
         let _r = RQMap::from_reader(bam, false, LibraryType::Unstranded, Some(mapq_filt), None);
-
+        assert!(false)
     }
     #[test]
     fn rqmap_from_reader_preproc() {
@@ -325,7 +385,7 @@ mod tests {
 
         // TODO work on this test
         let _r = RQMap::from_reader(bam, false, LibraryType::Unstranded, None, Some(tn5shift));
-
+        assert!(false)
     }
 
     #[test]
@@ -344,7 +404,8 @@ mod tests {
                                          LibraryType::Unstranded,
                                          None,
                                          None);
-        }
+        assert!(false)
+    }
 
     #[test]
     fn rqmap_from_indexed_filt() {
@@ -362,6 +423,7 @@ mod tests {
                                              LibraryType::Unstranded,
                                              Some(mapq_filt),
                                              None);
+        assert!(false)
     }
 
     #[test]
@@ -380,6 +442,7 @@ mod tests {
                                              LibraryType::Unstranded,
                                              None,
                                              Some(tn5shift));
+        assert!(false)
     }
 
 
