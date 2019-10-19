@@ -29,3 +29,6 @@ pub mod library_strategy;
 
 /// Useful and descriptive errors
 pub mod errors;
+
+/// crate for adding to locus maps
+pub mod append_record;

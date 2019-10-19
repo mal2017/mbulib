@@ -4,30 +4,14 @@ use bio_types::annot::contig::Contig;
 use bio_types::annot::loc::Loc;
 use bio_types::strand::ReqStrand;
 use rust_htslib::bam::HeaderView;
-use crate::locus::from_rec::*;
 use crate::scaffold_dict::ScaffoldDict;
 use crate::locus::positions::PositionScan;
 use rust_htslib::bam::Read;
 use std::cmp::{min, max};
 use crate::errors::*;
 use crate::library_strategy::*;
+use crate::append_record::*;
 
-trait AppendRecord {
-    fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), InvalidRecordError>;
-}
-
-
-impl AppendRecord for AnnotMap<String, Contig<String,ReqStrand>> {
-    fn append(&mut self, r: &bam::Record, as_frags: bool, sd: &ScaffoldDict, pf: &Option<fn(Contig<String,ReqStrand>)-> Contig<String,ReqStrand>>) -> Result<(), InvalidRecordError> {
-
-        match pf {
-            None => self.insert_loc(Contig::from_read(r, as_frags, sd)?),
-            Some(f) => self.insert_loc(f(Contig::from_read(r, as_frags, sd)?)),
-        }
-
-        Ok(())
-    }
-}
 
 
 /// Struct holds a library of NGS reads as an AnnotMap
@@ -71,7 +55,8 @@ impl RQMap {
                           as_frags: bool,
                           lt: LibraryType,
                           rf: Option<fn(&bam::Record) -> bool>,
-                          pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<Self,InvalidRecordError> {
+                          pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) ->
+                          Result<Self,InvalidRecordError> {
         let mut plus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let mut minus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
@@ -119,7 +104,8 @@ impl RQMap {
                             c: Vec<Contig<String,ReqStrand>>,
                             lt: LibraryType,
                             rf: Option<fn(&bam::Record) -> bool>,
-                            pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) -> Result<Self,InvalidRecordError> {
+                            pf: Option<fn(Contig<String,ReqStrand>) -> Contig<String,ReqStrand>>) ->
+                            Result<Self,InvalidRecordError> {
         let mut plus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let mut minus: AnnotMap<String,Contig<String,ReqStrand>> = AnnotMap::new();
         let hd: HeaderView = b.header().clone();
